@@ -1,0 +1,1073 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FixLocal AI Hosted Demo</title>
+    <meta
+      name="description"
+      content="A free hosted demo for generating polished local issue reports from photos and notes."
+    />
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+    <style>
+      :root {
+        --ink: #172033;
+        --blue: #1e64dd;
+        --teal: #0d9488;
+        --amber: #f59e0b;
+        --coral: #f9735b;
+        --paper: #f8fafc;
+        --line: #e2e8f0;
+        --muted: #64748b;
+        --shadow: 0 18px 45px rgba(15, 23, 42, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: linear-gradient(180deg, #ffffff 0%, var(--paper) 48%, #edf8f5 100%);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(14px);
+      }
+
+      .header-inner {
+        display: flex;
+        min-height: 64px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border-radius: 10px;
+        background: var(--ink);
+        color: white;
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 750;
+        transition:
+          transform 150ms ease,
+          background 150ms ease,
+          border 150ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-primary {
+        background: var(--blue);
+        color: white;
+        box-shadow: 0 10px 25px rgba(30, 100, 221, 0.24);
+      }
+
+      .btn-dark {
+        background: var(--ink);
+        color: white;
+      }
+
+      .btn-amber {
+        background: var(--amber);
+        color: var(--ink);
+      }
+
+      .btn-light {
+        border: 1px solid var(--line);
+        background: white;
+        color: #334155;
+      }
+
+      .btn-danger {
+        border: 1px solid #fecaca;
+        background: white;
+        color: #b91c1c;
+      }
+
+      .hero {
+        min-height: 680px;
+        background-image:
+          linear-gradient(90deg, rgba(13, 20, 33, 0.86), rgba(13, 20, 33, 0.48), rgba(13, 20, 33, 0.1)),
+          url("https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1800&q=80");
+        background-position: center;
+        background-size: cover;
+        color: white;
+      }
+
+      .hero-inner {
+        display: flex;
+        min-height: 680px;
+        align-items: center;
+        padding: 64px 0;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        padding: 8px 12px;
+        font-size: 14px;
+        font-weight: 800;
+        ring: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .hero h1 {
+        max-width: 780px;
+        margin-top: 18px;
+        font-size: clamp(44px, 7vw, 76px);
+        line-height: 1.02;
+        letter-spacing: 0;
+      }
+
+      .hero p {
+        max-width: 680px;
+        margin-top: 20px;
+        color: rgba(255, 255, 255, 0.86);
+        font-size: clamp(18px, 2vw, 22px);
+        line-height: 1.6;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .stats {
+        display: grid;
+        max-width: 680px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 38px;
+      }
+
+      .stat {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 14px;
+        backdrop-filter: blur(8px);
+      }
+
+      .stat strong {
+        display: block;
+        color: white;
+        font-size: 24px;
+      }
+
+      .stat span {
+        color: rgba(255, 255, 255, 0.74);
+        font-size: 13px;
+      }
+
+      .section {
+        padding: 64px 0;
+      }
+
+      .section-title {
+        max-width: 720px;
+      }
+
+      .kicker {
+        color: var(--teal);
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .section-title h2,
+      .view-head h1 {
+        margin-top: 10px;
+        font-size: clamp(30px, 5vw, 46px);
+        line-height: 1.1;
+        letter-spacing: 0;
+      }
+
+      .section-title p,
+      .view-head p {
+        margin-top: 14px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      .steps {
+        grid-template-columns: repeat(5, 1fr);
+        margin-top: 34px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: white;
+        box-shadow: var(--shadow);
+      }
+
+      .step-card,
+      .example-card {
+        padding: 20px;
+      }
+
+      .icon {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 10px;
+        background: #ecfdf5;
+        color: var(--teal);
+        font-weight: 900;
+      }
+
+      .step-card h3,
+      .example-card h3 {
+        margin-top: 18px;
+        font-size: 17px;
+      }
+
+      .step-card p,
+      .example-card p {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .examples {
+        grid-template-columns: repeat(5, 1fr);
+      }
+
+      .app {
+        padding: 34px 0 72px;
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .wizard {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 24px;
+        margin-top: 28px;
+      }
+
+      .rail {
+        position: sticky;
+        top: 88px;
+        align-self: start;
+        padding: 16px;
+      }
+
+      .rail button {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 8px;
+      }
+
+      .rail button.active {
+        background: var(--ink);
+        color: white;
+      }
+
+      .panel {
+        padding: 24px;
+      }
+
+      .dropzone {
+        display: grid;
+        min-height: 340px;
+        place-items: center;
+        border: 2px dashed #cbd5e1;
+        border-radius: 14px;
+        background: #f8fafc;
+        cursor: pointer;
+        text-align: center;
+      }
+
+      .dropzone input {
+        display: none;
+      }
+
+      .preview {
+        width: 100%;
+        max-height: 380px;
+        border-radius: 14px;
+        object-fit: cover;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      label,
+      .label {
+        color: #334155;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: white;
+        color: var(--ink);
+        padding: 12px;
+      }
+
+      textarea {
+        min-height: 116px;
+        resize: vertical;
+      }
+
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .category-grid button.selected {
+        border-color: var(--blue);
+        background: #eff6ff;
+        color: var(--blue);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .analysis {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .pill.medium {
+        background: #e0f2fe;
+        color: #0369a1;
+      }
+
+      .pill.high {
+        background: #ffedd5;
+        color: #9a3412;
+      }
+
+      .pill.urgent {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+
+      .pill.low {
+        background: #f1f5f9;
+        color: #475569;
+      }
+
+      .message-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 18px 0;
+      }
+
+      .message-tabs button.active {
+        background: var(--ink);
+        color: white;
+      }
+
+      pre {
+        overflow: auto;
+        max-height: 460px;
+        border-radius: 14px;
+        background: #0f172a;
+        color: #f8fafc;
+        padding: 18px;
+        white-space: pre-wrap;
+        line-height: 1.6;
+      }
+
+      .contact-list,
+      .report-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .contact,
+      .report-card {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #f8fafc;
+        padding: 18px;
+      }
+
+      .thumb {
+        width: 100%;
+        height: 160px;
+        border-radius: 12px;
+        object-fit: cover;
+        background: #e2e8f0;
+      }
+
+      .notice {
+        display: flex;
+        gap: 10px;
+        border: 1px solid #fde68a;
+        border-radius: 12px;
+        background: #fffbeb;
+        color: #92400e;
+        padding: 14px;
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 20;
+        display: none;
+        max-width: 360px;
+        border-radius: 12px;
+        background: var(--ink);
+        color: white;
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+        font-weight: 750;
+      }
+
+      .toast.show {
+        display: block;
+      }
+
+      .empty {
+        border: 1px dashed #cbd5e1;
+        border-radius: 14px;
+        background: white;
+        padding: 42px;
+        text-align: center;
+      }
+
+      .footer {
+        border-top: 1px solid var(--line);
+        background: white;
+        padding: 30px 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      @media (max-width: 900px) {
+        .steps,
+        .examples,
+        .contact-list,
+        .report-grid,
+        .analysis {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .wizard {
+          grid-template-columns: 1fr;
+        }
+
+        .rail {
+          position: static;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .nav {
+          gap: 6px;
+        }
+
+        .nav .btn-light {
+          display: none;
+        }
+
+        .stats,
+        .steps,
+        .examples,
+        .form-grid,
+        .category-grid,
+        .contact-list,
+        .report-grid,
+        .analysis,
+        .message-tabs {
+          grid-template-columns: 1fr;
+        }
+
+        .hero,
+        .hero-inner {
+          min-height: 620px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <div class="shell header-inner">
+        <button class="brand btn btn-light" type="button" data-view="home">
+          <span class="brand-mark">FL</span>
+          <span>FixLocal AI</span>
+        </button>
+        <nav class="nav">
+          <button class="btn btn-light" type="button" data-view="dashboard">Dashboard</button>
+          <button class="btn btn-primary" type="button" data-view="create">Create report</button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section id="home" class="view active">
+        <div class="hero">
+          <div class="shell hero-inner">
+            <div>
+              <span class="eyebrow">Review everything before sending</span>
+              <h1>Report local problems in 60 seconds</h1>
+              <p>
+                Upload a photo, add the location and a few details, and FixLocal AI drafts a
+                professional report for a city office, landlord, property manager, HOA, utility, or
+                code enforcement office.
+              </p>
+              <div class="hero-actions">
+                <button class="btn btn-amber" type="button" data-view="create">Create a report</button>
+                <button class="btn btn-light" type="button" data-view="dashboard">View dashboard</button>
+              </div>
+              <div class="stats">
+                <div class="stat"><strong>Free</strong><span>Browser mock AI</span></div>
+                <div class="stat"><strong>Local</strong><span>Saved to this browser</span></div>
+                <div class="stat"><strong>Fast</strong><span>Email, SMS, PDF</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="section">
+          <div class="shell">
+            <div class="section-title">
+              <p class="kicker">How it works</p>
+              <h2>A practical workflow for civic and property reports</h2>
+              <p>
+                This hosted demo uses the same mock-first product concept as the full local app,
+                adapted for GitHub Pages with browser storage instead of a server database.
+              </p>
+            </div>
+            <div class="grid steps">
+              <div class="card step-card"><div class="icon">1</div><h3>Upload photo</h3><p>Add a clear image of the issue.</p></div>
+              <div class="card step-card"><div class="icon">2</div><h3>Add details</h3><p>Describe location, category, urgency, and notes.</p></div>
+              <div class="card step-card"><div class="icon">3</div><h3>Generate report</h3><p>Mock AI estimates severity and drafts messages.</p></div>
+              <div class="card step-card"><div class="icon">4</div><h3>Pick contacts</h3><p>Use local directory suggestions as a starting point.</p></div>
+              <div class="card step-card"><div class="icon">5</div><h3>Track status</h3><p>Save reports and follow up from the dashboard.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="shell">
+            <div class="section-title">
+              <p class="kicker">Examples</p>
+              <h2>Built for everyday local problems</h2>
+            </div>
+            <div class="grid examples" id="exampleCards"></div>
+          </div>
+        </section>
+      </section>
+
+      <section id="create" class="view">
+        <div class="shell app">
+          <div class="view-head">
+            <p class="kicker">Hosted demo</p>
+            <h1>Create a report</h1>
+            <p>
+              This public GitHub Pages version runs fully in the browser. The full Next.js,
+              Prisma, SQLite, local-upload version is in the repository for local use.
+            </p>
+          </div>
+
+          <div class="wizard">
+            <aside class="card rail" id="stepRail"></aside>
+            <section class="card panel" id="wizardPanel"></section>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="view">
+        <div class="shell app">
+          <div class="view-head">
+            <p class="kicker">Dashboard</p>
+            <h1>Saved reports</h1>
+            <p>Reports are saved in this browser with localStorage for the hosted demo.</p>
+          </div>
+          <div id="dashboardBody" style="margin-top: 28px"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="shell">
+        FixLocal AI does not provide legal advice. AI-generated content may be inaccurate. Verify
+        contacts before sending. For emergencies, call emergency services.
+      </div>
+    </footer>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+      const categories = [
+        "Pothole",
+        "Broken sidewalk",
+        "Trash or illegal dumping",
+        "Unsafe rental condition",
+        "Mold",
+        "Broken streetlight",
+        "Flooding",
+        "Damaged sign",
+        "Unsafe wiring",
+        "Water damage",
+        "Other local problem"
+      ];
+
+      const statuses = ["Draft", "Submitted", "Waiting Response", "Needs Follow-up", "Resolved", "Closed"];
+      const storageKey = "fixlocal-ai-hosted-reports";
+      const steps = ["Upload photo", "Describe issue", "Generate", "Review and save"];
+      const examples = [
+        ["Pothole", "City Public Works", "High"],
+        ["Mold", "Property Manager", "Urgent"],
+        ["Broken streetlight", "Utility Company", "Medium"],
+        ["Trash dumping", "Sanitation", "Medium"],
+        ["Flooding", "Stormwater", "High"]
+      ];
+
+      const state = {
+        step: 0,
+        form: {
+          title: "",
+          description: "",
+          category: "Pothole",
+          address: "",
+          city: "",
+          state: "",
+          zip: "",
+          dateObserved: new Date().toISOString().slice(0, 10),
+          urgent: "No",
+          optionalNotes: "",
+          imageData: ""
+        },
+        generated: null,
+        activeMessage: "formalEmail"
+      };
+
+      function reports() {
+        return JSON.parse(localStorage.getItem(storageKey) || "[]");
+      }
+
+      function saveReports(items) {
+        localStorage.setItem(storageKey, JSON.stringify(items));
+      }
+
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      function setView(view) {
+        document.querySelectorAll(".view").forEach((node) => node.classList.remove("active"));
+        document.getElementById(view).classList.add("active");
+        if (view === "create") renderWizard();
+        if (view === "dashboard") renderDashboard();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function severityFor(form) {
+        const text = `${form.title} ${form.description} ${form.optionalNotes}`.toLowerCase();
+        const signals = ["dangerous", "injury", "unsafe", "electrical", "blocked", "leaking", "mold", "flooding", "sparking", "sewage"];
+        const hits = signals.filter((word) => text.includes(word)).length;
+        if (form.urgent === "Yes" && hits >= 2) return "Urgent";
+        if (form.urgent === "Yes" || hits >= 3) return "High";
+        if (hits >= 1) return "Medium";
+        return "Low";
+      }
+
+      function partyFor(category) {
+        return {
+          Pothole: "City Public Works",
+          "Broken sidewalk": "City Public Works",
+          "Trash or illegal dumping": "Sanitation Department",
+          "Unsafe rental condition": "Property Manager",
+          Mold: "Property Manager",
+          "Broken streetlight": "Utility Company",
+          Flooding: "Stormwater Department",
+          "Damaged sign": "Department of Transportation",
+          "Unsafe wiring": "Code Enforcement",
+          "Water damage": "Property Manager",
+          "Other local problem": "Other"
+        }[category] || "Other";
+      }
+
+      function detectedFor(category) {
+        return {
+          Pothole: "Road surface hazard",
+          "Broken sidewalk": "Pedestrian walkway hazard",
+          "Trash or illegal dumping": "Illegal dumping or sanitation concern",
+          "Unsafe rental condition": "Rental habitability concern",
+          Mold: "Indoor moisture and possible mold",
+          "Broken streetlight": "Streetlight outage",
+          Flooding: "Drainage or stormwater concern",
+          "Damaged sign": "Damaged public sign",
+          "Unsafe wiring": "Electrical safety hazard",
+          "Water damage": "Water intrusion and damage",
+          "Other local problem": "Local service request"
+        }[category] || "Local service request";
+      }
+
+      function contactsFor(form) {
+        const city = form.city || "Local";
+        const base = {
+          publicWorks: [`${city} Public Works`, "City Public Works", "publicworks@example-city.test", "(555) 010-2200", "Public Works commonly handles streets, sidewalks, drainage, signs, and infrastructure."],
+          code: [`${city} Code Enforcement`, "Code Enforcement", "codeenforcement@example-city.test", "(555) 010-3300", "Code enforcement can review unsafe property, nuisance, sanitation, and unresolved habitability concerns."],
+          property: ["Property Manager or Landlord", "Property Manager", "maintenance@example-property.test", "(555) 010-4400", "Rental and building condition issues should generally be reported to the owner or manager first."],
+          dot: ["Transportation Maintenance Desk", "Department of Transportation", "roadmaintenance@example-state.test", "(555) 010-6600", "Transportation agencies often handle state roads, traffic signs, and higher-volume corridors."],
+          utility: ["Electric Utility Streetlight Team", "Utility Company", "streetlights@example-utility.test", "(555) 010-7700", "Streetlight outages and utility equipment concerns are often routed to the local electric utility."],
+          sanitation: [`${city} Sanitation Hotline`, "Sanitation Department", "sanitation@example-city.test", "(555) 010-8800", "Trash, debris, and illegal dumping are commonly handled by sanitation or solid waste teams."],
+          stormwater: [`${city} Stormwater Team`, "Stormwater Department", "stormwater@example-city.test", "(555) 010-9900", "Flooding, standing water, blocked drains, and runoff concerns are usually handled by stormwater staff."]
+        };
+        const map = {
+          Pothole: [base.publicWorks, base.dot],
+          "Broken sidewalk": [base.publicWorks, base.code],
+          "Trash or illegal dumping": [base.sanitation, base.code],
+          "Unsafe rental condition": [base.property, base.code],
+          Mold: [base.property, base.code],
+          "Broken streetlight": [base.utility, base.publicWorks],
+          Flooding: [base.stormwater, base.publicWorks],
+          "Damaged sign": [base.dot, base.publicWorks],
+          "Unsafe wiring": [base.code, base.property, base.utility],
+          "Water damage": [base.property, base.code],
+          "Other local problem": [base.publicWorks, base.code]
+        };
+        return (map[form.category] || map["Other local problem"]).map((item) => ({
+          name: item[0],
+          type: item[1],
+          email: item[2],
+          phone: item[3],
+          reason: item[4]
+        }));
+      }
+
+      function generateReport() {
+        const form = state.form;
+        const required = ["imageData", "title", "description", "address", "city", "state", "zip", "dateObserved"];
+        const missing = required.find((key) => !form[key]);
+        if (missing) {
+          showToast("Add the missing report details before generating.");
+          return;
+        }
+        const severity = severityFor(form);
+        const party = partyFor(form.category);
+        const location = `${form.address}, ${form.city}, ${form.state} ${form.zip}`;
+        const observed = new Date(form.dateObserved).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
+        const urgentLine = severity === "Urgent" || severity === "High"
+          ? "Because this may present a safety or health risk, I am requesting prompt review."
+          : "I am requesting review and repair when staff are able to inspect the location.";
+        const subjectLine = `Request for action: ${form.title} at ${form.address}`;
+        const notes = form.optionalNotes ? `\n\nAdditional notes: ${form.optionalNotes}` : "";
+        const formalEmail = `Subject: ${subjectLine}\n\nHello,\n\nI am reporting ${form.title.toLowerCase()} at ${location}. The issue was observed on ${observed}.\n\nSummary: ${form.description}\n\n${urgentLine} I have a photo available as an attachment or reference image. Please inspect the location and let me know what action can be taken or which office should handle this if it is outside your department.${notes}\n\nThank you,\nFixLocal AI user`;
+        state.generated = {
+          analysis: {
+            detectedIssueType: detectedFor(form.category),
+            severity,
+            confidenceScore: Math.min(94, 70 + (form.description.length > 70 ? 10 : 0) + (form.optionalNotes ? 6 : 0)),
+            suggestedResponsibleParty: party,
+            missingDetails: ["Approximate affected area", "Whether the condition is getting worse", "Any prior report or request number"]
+          },
+          contacts: contactsFor(form),
+          messages: {
+            subjectLine,
+            formalEmail,
+            smsMessage: `${form.title} at ${location}. Observed ${observed}. ${form.description} Severity estimate: ${severity}. Photo available. Please inspect or route to ${party}.`,
+            printableReport: `FixLocal AI Report\n\nIssue: ${form.title}\nCategory: ${form.category}\nLocation: ${location}\nDate observed: ${observed}\nEstimated severity: ${severity}\nSuggested responsible party: ${party}\n\nDescription:\n${form.description}\n\nRequested action:\nPlease inspect the location, document the condition, and schedule repair, cleanup, enforcement, or referral to the appropriate office. A photo is available for reference.${notes}`,
+            followUpMessage: `Hello, I am following up on my report about ${form.title.toLowerCase()} at ${location}. It was observed on ${observed}. Could you please confirm whether it has been inspected, assigned, or routed to the correct office?`
+          }
+        };
+        state.step = 2;
+        renderWizard();
+        showToast("Mock AI report generated.");
+      }
+
+      function renderExamples() {
+        document.getElementById("exampleCards").innerHTML = examples
+          .map(([title, contact, severity]) => `<div class="card example-card"><div class="icon">${severity[0]}</div><h3>${title}</h3><p><strong>Suggested:</strong> ${contact}</p><p><strong>Severity:</strong> ${severity}</p></div>`)
+          .join("");
+      }
+
+      function renderRail() {
+        document.getElementById("stepRail").innerHTML = `<p class="kicker">Create report</p>${steps
+          .map((label, index) => `<button type="button" class="btn btn-light ${state.step === index ? "active" : ""}" onclick="state.step=${index};renderWizard()">${index + 1}. ${label}</button>`)
+          .join("")}`;
+      }
+
+      function input(name, label, type = "text", full = false) {
+        return `<div class="field ${full ? "full" : ""}"><label for="${name}">${label}</label><input id="${name}" type="${type}" value="${escapeHtml(state.form[name] || "")}" oninput="state.form.${name}=this.value"></div>`;
+      }
+
+      function renderWizard() {
+        renderRail();
+        const panel = document.getElementById("wizardPanel");
+        if (state.step === 0) {
+          panel.innerHTML = `<h2>Upload photo</h2><p style="margin-top:8px;color:var(--muted)">The hosted demo keeps the image in this browser only.</p><div style="margin-top:18px">${state.form.imageData ? `<img class="preview" src="${state.form.imageData}" alt="Uploaded issue preview"><div style="margin-top:12px"><button class="btn btn-light" onclick="state.form.imageData='';renderWizard()">Remove photo</button></div>` : `<label class="dropzone"><input type="file" accept="image/*" onchange="handleFile(this.files[0])"><div><div class="icon" style="margin:0 auto 12px">+</div><strong>Upload an issue photo</strong><p style="margin-top:8px;color:var(--muted)">JPG, PNG, WEBP, or GIF</p></div></label>`}</div>${navButtons()}`;
+        } else if (state.step === 1) {
+          panel.innerHTML = `<h2>Describe the issue</h2><div class="form-grid" style="margin-top:18px">${input("title", "Issue title", "text", true)}<div class="field full"><label>Description</label><textarea oninput="state.form.description=this.value">${escapeHtml(state.form.description)}</textarea></div><div class="field full"><span class="label">Issue category</span><div class="category-grid">${categories.map((category) => `<button type="button" class="btn btn-light ${state.form.category === category ? "selected" : ""}" onclick="state.form.category='${category}';renderWizard()">${category}</button>`).join("")}</div></div>${input("address", "Address or location", "text", true)}${input("city", "City")}${input("state", "State")}${input("zip", "ZIP code")}${input("dateObserved", "Date observed", "date")}<div class="field"><label>Is this urgent?</label><select onchange="state.form.urgent=this.value"><option ${state.form.urgent === "No" ? "selected" : ""}>No</option><option ${state.form.urgent === "Yes" ? "selected" : ""}>Yes</option></select></div><div class="field full"><label>Optional notes</label><textarea oninput="state.form.optionalNotes=this.value">${escapeHtml(state.form.optionalNotes)}</textarea></div></div><div class="actions"><button class="btn btn-light" onclick="state.step=0;renderWizard()">Back</button><button class="btn btn-primary" onclick="generateReport()">Generate AI report</button></div>`;
+        } else if (state.step === 2) {
+          if (!state.generated) {
+            panel.innerHTML = `<h2>Generate report</h2><p style="margin-top:8px;color:var(--muted)">Add details first, then generate the mock AI report.</p>${navButtons()}`;
+            return;
+          }
+          const analysis = state.generated.analysis;
+          panel.innerHTML = `<h2>AI analysis</h2><div class="analysis" style="margin-top:18px"><div class="contact"><h3>${analysis.detectedIssueType}</h3><p style="margin-top:8px;color:var(--muted)">Suggested party: <strong>${analysis.suggestedResponsibleParty}</strong></p><p style="margin-top:12px"><span class="pill ${analysis.severity.toLowerCase()}">${analysis.severity}</span> <span class="pill low">${analysis.confidenceScore}% confidence</span></p></div><div class="contact"><h3>Details to consider</h3><ul>${analysis.missingDetails.map((item) => `<li>${item}</li>`).join("")}</ul></div></div>${renderMessages()}${renderContacts()}<div class="actions"><button class="btn btn-light" onclick="state.step=1;renderWizard()">Back</button><button class="btn btn-dark" onclick="state.step=3;renderWizard()">Review and save</button></div>`;
+        } else {
+          panel.innerHTML = `<h2>Review and save</h2><div class="notice" style="margin-top:16px"><strong>Note:</strong><span>This tool does not provide legal advice. Review messages and verify contacts before sending. For emergencies, call emergency services.</span></div><div style="margin-top:18px">${state.form.imageData ? `<img class="thumb" src="${state.form.imageData}" alt="">` : ""}<h3 style="margin-top:14px">${escapeHtml(state.form.title)}</h3><p style="margin-top:8px;color:var(--muted)">${escapeHtml(state.form.address)}, ${escapeHtml(state.form.city)}, ${escapeHtml(state.form.state)} ${escapeHtml(state.form.zip)}</p></div><div class="actions"><button class="btn btn-light" onclick="copyText(state.generated.messages.formalEmail)">Copy email</button><button class="btn btn-light" onclick="downloadPdf(state.form,state.generated)">Download PDF</button><button class="btn btn-primary" onclick="saveCurrentReport()">Save report</button></div>`;
+        }
+      }
+
+      function navButtons() {
+        return `<div class="actions"><button class="btn btn-light" onclick="state.step=Math.max(0,state.step-1);renderWizard()">Back</button><button class="btn btn-dark" onclick="state.step=Math.min(3,state.step+1);renderWizard()">Continue</button></div>`;
+      }
+
+      function renderMessages() {
+        const messages = state.generated.messages;
+        const key = state.activeMessage;
+        const labels = { formalEmail: "Email", smsMessage: "SMS", printableReport: "Printable", followUpMessage: "Follow-up" };
+        return `<div style="margin-top:22px"><h3>Generated messages</h3><div class="message-tabs">${Object.keys(labels).map((item) => `<button class="btn btn-light ${key === item ? "active" : ""}" onclick="state.activeMessage='${item}';renderWizard()">${labels[item]}</button>`).join("")}</div><div class="actions" style="justify-content:flex-start"><button class="btn btn-light" onclick="copyText(state.generated.messages[state.activeMessage])">Copy</button><a class="btn btn-primary" href="mailto:${state.generated.contacts[0].email}?subject=${encodeURIComponent(messages.subjectLine)}&body=${encodeURIComponent(messages.formalEmail)}">Mailto</a></div><pre>${escapeHtml(messages[key])}</pre></div>`;
+      }
+
+      function renderContacts() {
+        return `<div style="margin-top:22px"><h3>Contact suggestions</h3><div class="contact-list" style="margin-top:12px">${state.generated.contacts.map((contact) => `<div class="contact"><h3>${contact.name}</h3><p><strong>${contact.type}</strong></p><p>${contact.reason}</p><p style="margin-top:10px">${contact.email}<br>${contact.phone}</p></div>`).join("")}</div></div>`;
+      }
+
+      function renderDashboard() {
+        const items = reports();
+        const body = document.getElementById("dashboardBody");
+        if (!items.length) {
+          body.innerHTML = `<div class="empty"><h2>No reports yet</h2><p style="margin-top:8px;color:var(--muted)">Create a report to see it here.</p><button style="margin-top:18px" class="btn btn-primary" data-view="create">Create a report</button></div>`;
+          wireViewButtons();
+          return;
+        }
+        body.innerHTML = `<div class="report-grid">${items.map((report) => `<article class="report-card"><img class="thumb" src="${report.form.imageData}" alt=""><p style="margin-top:12px"><span class="pill ${report.generated.analysis.severity.toLowerCase()}">${report.generated.analysis.severity}</span> <span class="pill low">${report.status}</span></p><h3 style="margin-top:12px">${escapeHtml(report.form.title)}</h3><p style="margin-top:8px;color:var(--muted)">${escapeHtml(report.form.category)} at ${escapeHtml(report.form.address)}, ${escapeHtml(report.form.city)}</p><div style="margin-top:12px" class="field"><label>Status</label><select onchange="updateStatus('${report.id}',this.value)">${statuses.map((status) => `<option ${report.status === status ? "selected" : ""}>${status}</option>`).join("")}</select></div><div class="actions" style="justify-content:flex-start"><button class="btn btn-light" onclick="copyText(getReport('${report.id}').generated.messages.formalEmail)">Copy email</button><button class="btn btn-light" onclick="downloadPdf(getReport('${report.id}').form,getReport('${report.id}').generated)">PDF</button><button class="btn btn-danger" onclick="deleteReport('${report.id}')">Delete</button></div></article>`).join("")}</div>`;
+      }
+
+      function handleFile(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          state.form.imageData = reader.result;
+          renderWizard();
+          showToast("Photo loaded.");
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function saveCurrentReport() {
+        if (!state.generated) return showToast("Generate the report first.");
+        const item = {
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+          form: JSON.parse(JSON.stringify(state.form)),
+          generated: JSON.parse(JSON.stringify(state.generated)),
+          status: "Draft",
+          createdAt: new Date().toISOString()
+        };
+        saveReports([item, ...reports()]);
+        showToast("Report saved.");
+        setView("dashboard");
+      }
+
+      function getReport(id) {
+        return reports().find((item) => item.id === id);
+      }
+
+      function updateStatus(id, status) {
+        saveReports(reports().map((item) => (item.id === id ? { ...item, status } : item)));
+        showToast("Status updated.");
+        renderDashboard();
+      }
+
+      function deleteReport(id) {
+        saveReports(reports().filter((item) => item.id !== id));
+        showToast("Report deleted.");
+        renderDashboard();
+      }
+
+      function copyText(value) {
+        navigator.clipboard.writeText(value || "");
+        showToast("Copied to clipboard.");
+      }
+
+      function downloadPdf(form, generated) {
+        const JsPdf = window.jspdf && window.jspdf.jsPDF;
+        if (!JsPdf) {
+          window.print();
+          return;
+        }
+        const doc = new JsPdf({ unit: "mm", format: "letter" });
+        const lines = [
+          form.title,
+          `Category: ${form.category}`,
+          `Location: ${form.address}, ${form.city}, ${form.state} ${form.zip}`,
+          `Date observed: ${form.dateObserved}`,
+          `Severity: ${generated.analysis.severity}`,
+          "",
+          "Description:",
+          form.description,
+          "",
+          "AI analysis:",
+          `${generated.analysis.detectedIssueType}. Suggested responsible party: ${generated.analysis.suggestedResponsibleParty}.`,
+          "",
+          "Suggested contacts:",
+          ...generated.contacts.map((contact) => `${contact.name} (${contact.type}) - ${contact.email}, ${contact.phone}`),
+          "",
+          "Formal report:",
+          generated.messages.formalEmail
+        ];
+        let y = 16;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+        lines.forEach((line, index) => {
+          if (index === 0) {
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+          } else {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+          }
+          const wrapped = doc.splitTextToSize(line, 180);
+          if (y + wrapped.length * 6 > 270) {
+            doc.addPage();
+            y = 16;
+          }
+          doc.text(wrapped, 16, y);
+          y += Math.max(6, wrapped.length * 5.5);
+        });
+        doc.save(`${form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "fixlocal-report"}.pdf`);
+      }
+
+      function escapeHtml(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function wireViewButtons() {
+        document.querySelectorAll("[data-view]").forEach((button) => {
+          button.onclick = () => setView(button.dataset.view);
+        });
+      }
+
+      renderExamples();
+      renderWizard();
+      wireViewButtons();
+    </script>
+  </body>
+</html>

@@ -28,6 +28,14 @@ Open [http://localhost:3000](http://localhost:3000).
 
 The app includes a `Continue as Demo User` flow. The default experience does not require paid APIs, cloud services, hosted databases, hosted file storage, email providers, maps APIs, or AI APIs.
 
+## Hosted demo
+
+The public GitHub Pages demo is available at:
+
+[https://monaghanhc.github.io/FixLocal_Website/](https://monaghanhc.github.io/FixLocal_Website/)
+
+GitHub Pages is static-only, so the hosted demo in `docs/` uses browser localStorage, browser image previews, mock AI, copy/mailto actions, and client-side PDF generation. The full Next.js/Prisma/SQLite implementation remains the local app described above.
+
 ## Environment
 
 Copy `.env.example` to `.env` if needed. This repository includes a local `.env` for development convenience:

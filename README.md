@@ -1,3 +1,7 @@
+# Check out the live Website
+- https://monaghanhc.github.io/FixLocal_Website/
+
+
 # FixLocal AI
 
 FixLocal AI is a free-to-run full-stack MVP for creating polished reports about local problems. Users can upload a photo, describe the issue and location, generate AI-assisted report text, see suggested contacts from a local mock directory, save the report, copy messages, open a mailto draft, download a PDF, and track status.

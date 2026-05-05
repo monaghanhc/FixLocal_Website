@@ -16,7 +16,7 @@ const tabs = [
 type GeneratedMessagesTabsProps = {
   messages: GeneratedMessages;
   subjectLine?: string;
-  mailtoEmail?: string;
+  mailtoEmail?: string | null;
 };
 
 export function GeneratedMessagesTabs({

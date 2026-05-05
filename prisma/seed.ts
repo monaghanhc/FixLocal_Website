@@ -82,30 +82,38 @@ async function main() {
             {
               name:
                 report.category === "Mold"
-                  ? "Maple Avenue Property Management"
-                  : "Riverton Public Works",
+                  ? "Verified Property Manager or Landlord"
+                  : "Riverton Public Works Official Lookup",
               type:
                 report.category === "Mold" ? "Property Manager" : "City Public Works",
-              email:
-                report.category === "Mold"
-                  ? "repairs@example-property.test"
-                  : "publicworks@riverton.example",
-              phone: report.category === "Mold" ? "(555) 013-4410" : "(555) 013-2200",
+              email: null,
+              phone: null,
               website:
                 report.category === "Mold"
-                  ? "https://example-property.test/maintenance"
-                  : "https://riverton.example/public-works",
+                  ? "https://www.google.com/search?q=property%20manager%20maintenance%201200%20Maple%20Avenue%20Riverton%20OH%20phone%20email"
+                  : "https://www.google.com/search?q=official%20Riverton%20OH%20Public%20Works%20contact%20phone%20email",
+              lookupUrl:
+                report.category === "Mold"
+                  ? "https://www.google.com/search?q=property%20manager%20maintenance%201200%20Maple%20Avenue%20Riverton%20OH%20phone%20email"
+                  : "https://www.google.com/search?q=official%20Riverton%20OH%20Public%20Works%20contact%20phone%20email",
+              verificationNote:
+                "Demo data does not include unverified contact details. Open the official lookup and confirm the current email or phone number before sending.",
               reason:
                 report.category === "Mold"
                   ? "Rental habitability issues should first be reported to the property manager, with code enforcement as a backup."
                   : "Potholes and road surface hazards are typically handled by Public Works or transportation staff."
             },
             {
-              name: "Riverton Code Enforcement",
+              name: "Riverton Code Enforcement Official Lookup",
               type: "Code Enforcement",
-              email: "codeenforcement@riverton.example",
-              phone: "(555) 013-3300",
-              website: "https://riverton.example/code-enforcement",
+              email: null,
+              phone: null,
+              website:
+                "https://www.google.com/search?q=official%20Riverton%20OH%20Code%20Enforcement%20contact%20phone%20email",
+              lookupUrl:
+                "https://www.google.com/search?q=official%20Riverton%20OH%20Code%20Enforcement%20contact%20phone%20email",
+              verificationNote:
+                "Use the official city or county contact page to verify the current phone number or email address.",
               reason: "Useful if the condition is not corrected or creates an ongoing safety concern."
             }
           ]

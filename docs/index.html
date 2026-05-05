@@ -822,16 +822,21 @@
         }[category] || "Local service request";
       }
 
+      function searchUrl(query) {
+        return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+      }
+
       function contactsFor(form) {
         const city = form.city || "Local";
+        const location = `${form.city || ""} ${form.state || ""}`.trim();
         const base = {
-          publicWorks: [`${city} Public Works`, "City Public Works", "publicworks@example-city.test", "(555) 010-2200", "Public Works commonly handles streets, sidewalks, drainage, signs, and infrastructure."],
-          code: [`${city} Code Enforcement`, "Code Enforcement", "codeenforcement@example-city.test", "(555) 010-3300", "Code enforcement can review unsafe property, nuisance, sanitation, and unresolved habitability concerns."],
-          property: ["Property Manager or Landlord", "Property Manager", "maintenance@example-property.test", "(555) 010-4400", "Rental and building condition issues should generally be reported to the owner or manager first."],
-          dot: ["Transportation Maintenance Desk", "Department of Transportation", "roadmaintenance@example-state.test", "(555) 010-6600", "Transportation agencies often handle state roads, traffic signs, and higher-volume corridors."],
-          utility: ["Electric Utility Streetlight Team", "Utility Company", "streetlights@example-utility.test", "(555) 010-7700", "Streetlight outages and utility equipment concerns are often routed to the local electric utility."],
-          sanitation: [`${city} Sanitation Hotline`, "Sanitation Department", "sanitation@example-city.test", "(555) 010-8800", "Trash, debris, and illegal dumping are commonly handled by sanitation or solid waste teams."],
-          stormwater: [`${city} Stormwater Team`, "Stormwater Department", "stormwater@example-city.test", "(555) 010-9900", "Flooding, standing water, blocked drains, and runoff concerns are usually handled by stormwater staff."]
+          publicWorks: [`${city} Public Works official lookup`, "City Public Works", `official ${location} Public Works contact phone email`, "Public Works commonly handles streets, sidewalks, drainage, signs, and infrastructure."],
+          code: [`${city} Code Enforcement official lookup`, "Code Enforcement", `official ${location} Code Enforcement contact phone email`, "Code enforcement can review unsafe property, nuisance, sanitation, and unresolved habitability concerns."],
+          property: ["Property manager or landlord official lookup", "Property Manager", `property manager maintenance contact phone email ${form.address} ${location}`, "Rental and building condition issues should generally be reported to the owner or manager first."],
+          dot: ["Transportation maintenance official lookup", "Department of Transportation", `official ${form.state} Department of Transportation road maintenance contact phone email ${form.city}`, "Transportation agencies often handle state roads, traffic signs, and higher-volume corridors."],
+          utility: ["Electric utility streetlight official lookup", "Utility Company", `official ${location} electric utility streetlight outage contact phone email`, "Streetlight outages and utility equipment concerns are often routed to the local electric utility."],
+          sanitation: [`${city} sanitation official lookup`, "Sanitation Department", `official ${location} sanitation illegal dumping contact phone email`, "Trash, debris, and illegal dumping are commonly handled by sanitation or solid waste teams."],
+          stormwater: [`${city} stormwater official lookup`, "Stormwater Department", `official ${location} stormwater drainage flooding contact phone email`, "Flooding, standing water, blocked drains, and runoff concerns are usually handled by stormwater staff."]
         };
         const map = {
           Pothole: [base.publicWorks, base.dot],
@@ -849,9 +854,11 @@
         return (map[form.category] || map["Other local problem"]).map((item) => ({
           name: item[0],
           type: item[1],
-          email: item[2],
-          phone: item[3],
-          reason: item[4]
+          email: "",
+          phone: "",
+          lookupUrl: searchUrl(item[2]),
+          reason: item[3],
+          verificationNote: "Phone and email are intentionally not auto-filled. Open the official lookup and verify the current contact from a government, utility, landlord, or HOA source before sending."
         }));
       }
 
@@ -938,11 +945,11 @@
         const messages = state.generated.messages;
         const key = state.activeMessage;
         const labels = { formalEmail: "Email", smsMessage: "SMS", printableReport: "Printable", followUpMessage: "Follow-up" };
-        return `<div style="margin-top:22px"><h3>Generated messages</h3><div class="message-tabs">${Object.keys(labels).map((item) => `<button class="btn btn-light ${key === item ? "active" : ""}" onclick="state.activeMessage='${item}';renderWizard()">${labels[item]}</button>`).join("")}</div><div class="actions" style="justify-content:flex-start"><button class="btn btn-light" onclick="copyText(state.generated.messages[state.activeMessage])">Copy</button><a class="btn btn-primary" href="mailto:${state.generated.contacts[0].email}?subject=${encodeURIComponent(messages.subjectLine)}&body=${encodeURIComponent(messages.formalEmail)}">Mailto</a></div><pre>${escapeHtml(messages[key])}</pre></div>`;
+        return `<div style="margin-top:22px"><h3>Generated messages</h3><div class="message-tabs">${Object.keys(labels).map((item) => `<button class="btn btn-light ${key === item ? "active" : ""}" onclick="state.activeMessage='${item}';renderWizard()">${labels[item]}</button>`).join("")}</div><div class="actions" style="justify-content:flex-start"><button class="btn btn-light" onclick="copyText(state.generated.messages[state.activeMessage])">Copy</button><a class="btn btn-primary" href="mailto:?subject=${encodeURIComponent(messages.subjectLine)}&body=${encodeURIComponent(messages.formalEmail)}">Mailto draft</a></div><pre>${escapeHtml(messages[key])}</pre></div>`;
       }
 
       function renderContacts() {
-        return `<div style="margin-top:22px"><h3>Contact suggestions</h3><div class="contact-list" style="margin-top:12px">${state.generated.contacts.map((contact) => `<div class="contact"><h3>${contact.name}</h3><p><strong>${contact.type}</strong></p><p>${contact.reason}</p><p style="margin-top:10px">${contact.email}<br>${contact.phone}</p></div>`).join("")}</div></div>`;
+        return `<div style="margin-top:22px"><h3>Contact suggestions</h3><p style="margin-top:8px;color:var(--muted)">No unverified email or phone number is shown. Open the official lookup and verify contact details before sending.</p><div class="contact-list" style="margin-top:12px">${state.generated.contacts.map((contact) => `<div class="contact"><h3>${contact.name}</h3><p><strong>${contact.type}</strong></p><p>${contact.reason}</p><p style="margin-top:10px;color:var(--muted)">${contact.verificationNote}</p><p style="margin-top:10px">Email: verify from official source<br>Phone: verify from official source</p><a class="btn btn-light" style="margin-top:10px" href="${contact.lookupUrl}" target="_blank" rel="noreferrer">Open official lookup</a></div>`).join("")}</div></div>`;
       }
 
       function renderDashboard() {
@@ -1023,7 +1030,7 @@
           `${generated.analysis.detectedIssueType}. Suggested responsible party: ${generated.analysis.suggestedResponsibleParty}.`,
           "",
           "Suggested contacts:",
-          ...generated.contacts.map((contact) => `${contact.name} (${contact.type}) - ${contact.email}, ${contact.phone}`),
+          ...generated.contacts.map((contact) => `${contact.name} (${contact.type}) - Email: verify from official source, Phone: verify from official source, Lookup: ${contact.lookupUrl}`),
           "",
           "Formal report:",
           generated.messages.formalEmail

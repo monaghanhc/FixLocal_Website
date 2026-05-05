@@ -18,9 +18,11 @@ export const reportInputSchema = z.object({
 export const contactSchema = z.object({
   name: z.string().min(1),
   type: z.string().min(1),
-  email: z.string().email(),
-  phone: z.string().min(1),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().min(1).optional().nullable(),
   website: z.string().url(),
+  lookupUrl: z.string().url().optional().nullable(),
+  verificationNote: z.string().optional().nullable(),
   reason: z.string().min(1)
 });
 

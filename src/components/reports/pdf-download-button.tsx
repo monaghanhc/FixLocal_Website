@@ -76,7 +76,7 @@ export function PDFDownloadButton({ data }: { data: PDFReportData }) {
       data.contacts.forEach((contact) => {
         y = addWrapped(
           doc,
-          `${contact.name} (${contact.type}) - ${contact.email}, ${contact.phone}. ${contact.reason}`,
+          `${contact.name} (${contact.type}) - Email: ${contact.email || "verify from official source"}, Phone: ${contact.phone || "verify from official source"}. ${contact.reason}`,
           margin,
           y,
           width

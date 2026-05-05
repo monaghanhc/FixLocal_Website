@@ -3,103 +3,87 @@ import type { AIReportInput } from "@/lib/ai/types";
 export type SuggestedContactDTO = {
   name: string;
   type: string;
-  email: string;
-  phone: string;
+  email?: string | null;
+  phone?: string | null;
   website: string;
+  lookupUrl?: string | null;
+  verificationNote?: string | null;
   reason: string;
 };
 
-const genericContacts: Record<string, SuggestedContactDTO> = {
-  publicWorks: {
-    name: "Local Public Works Service Desk",
-    type: "City Public Works",
-    email: "publicworks@example-city.test",
-    phone: "(555) 010-2200",
-    website: "https://example-city.test/public-works",
-    reason: "Public Works commonly handles streets, sidewalks, drainage, signs, and related infrastructure."
-  },
-  code: {
-    name: "Local Code Enforcement Office",
-    type: "Code Enforcement",
-    email: "codeenforcement@example-city.test",
-    phone: "(555) 010-3300",
-    website: "https://example-city.test/code-enforcement",
-    reason: "Code enforcement can review unsafe property, nuisance, sanitation, and unresolved habitability concerns."
-  },
-  property: {
-    name: "Property Manager or Landlord",
-    type: "Property Manager",
-    email: "maintenance@example-property.test",
-    phone: "(555) 010-4400",
-    website: "https://example-property.test/maintenance",
-    reason: "Rental and building condition issues should generally be reported to the property owner or manager first."
-  },
-  hoa: {
-    name: "Neighborhood HOA or Community Manager",
-    type: "HOA",
-    email: "manager@example-hoa.test",
-    phone: "(555) 010-5500",
-    website: "https://example-hoa.test/requests",
-    reason: "HOAs and community managers may handle private streets, shared amenities, landscaping, and common areas."
-  },
-  dot: {
-    name: "Transportation Maintenance Desk",
-    type: "Department of Transportation",
-    email: "roadmaintenance@example-state.test",
-    phone: "(555) 010-6600",
-    website: "https://example-state.test/transportation",
-    reason: "Transportation agencies often handle state roads, traffic signs, and higher-volume corridors."
-  },
-  utility: {
-    name: "Electric Utility Streetlight Team",
-    type: "Utility Company",
-    email: "streetlights@example-utility.test",
-    phone: "(555) 010-7700",
-    website: "https://example-utility.test/streetlights",
-    reason: "Streetlight outages and utility equipment concerns are often routed to the local electric utility."
-  },
-  sanitation: {
-    name: "Sanitation and Illegal Dumping Hotline",
-    type: "Sanitation Department",
-    email: "sanitation@example-city.test",
-    phone: "(555) 010-8800",
-    website: "https://example-city.test/sanitation",
-    reason: "Trash, debris, and illegal dumping are commonly handled by sanitation or solid waste teams."
-  },
-  stormwater: {
-    name: "Stormwater and Drainage Team",
-    type: "Stormwater Department",
-    email: "stormwater@example-city.test",
-    phone: "(555) 010-9900",
-    website: "https://example-city.test/stormwater",
-    reason: "Flooding, standing water, blocked drains, and runoff concerns are usually handled by stormwater staff."
-  }
-};
+function searchUrl(query: string) {
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
 
-function localize(contact: SuggestedContactDTO, city: string) {
-  if (!city.trim()) return contact;
+function makeContact(input: AIReportInput, type: string, office: string, reason: string): SuggestedContactDTO {
+  const location = [input.city, input.state].filter(Boolean).join(" ");
+  const query =
+    type === "Property Manager" || type === "HOA"
+      ? `${office} contact phone email ${input.address} ${location}`.trim()
+      : `official ${location} ${office} contact phone email`.trim();
+
   return {
-    ...contact,
-    name: contact.name.replace("Local", city)
+    name: `${location || "Local"} ${office}`,
+    type,
+    email: null,
+    phone: null,
+    website: searchUrl(query),
+    lookupUrl: searchUrl(query),
+    verificationNote:
+      "Phone and email are intentionally not auto-filled unless verified from an official source. Open the lookup link and use the official city, county, utility, landlord, or HOA contact page.",
+    reason
   };
 }
 
 export function suggestContacts(input: AIReportInput): SuggestedContactDTO[] {
-  const city = input.city || "Local";
   const byCategory: Record<string, SuggestedContactDTO[]> = {
-    Pothole: [genericContacts.publicWorks, genericContacts.dot],
-    "Broken sidewalk": [genericContacts.publicWorks, genericContacts.code],
-    "Trash or illegal dumping": [genericContacts.sanitation, genericContacts.code],
-    "Unsafe rental condition": [genericContacts.property, genericContacts.code],
-    Mold: [genericContacts.property, genericContacts.code],
-    "Broken streetlight": [genericContacts.utility, genericContacts.publicWorks],
-    Flooding: [genericContacts.stormwater, genericContacts.publicWorks],
-    "Damaged sign": [genericContacts.dot, genericContacts.publicWorks],
-    "Unsafe wiring": [genericContacts.code, genericContacts.property, genericContacts.utility],
-    "Water damage": [genericContacts.property, genericContacts.code],
-    "Other local problem": [genericContacts.publicWorks, genericContacts.code, genericContacts.hoa]
+    Pothole: [
+      makeContact(input, "City Public Works", "Public Works", "Potholes and local road hazards are commonly handled by Public Works."),
+      makeContact(input, "Department of Transportation", "Department of Transportation road maintenance", "Use this if the road is state-maintained or a major corridor.")
+    ],
+    "Broken sidewalk": [
+      makeContact(input, "City Public Works", "Public Works sidewalk repair", "Sidewalk hazards are commonly handled by Public Works or transportation staff."),
+      makeContact(input, "Code Enforcement", "Code Enforcement", "Code enforcement may help when the sidewalk is tied to private property obligations.")
+    ],
+    "Trash or illegal dumping": [
+      makeContact(input, "Sanitation Department", "Sanitation illegal dumping", "Dumping and debris issues are commonly routed to sanitation or solid waste teams."),
+      makeContact(input, "Code Enforcement", "Code Enforcement nuisance complaint", "Code enforcement may handle recurring nuisance or property violations.")
+    ],
+    "Unsafe rental condition": [
+      makeContact(input, "Property Manager", "property manager maintenance", "Rental habitability issues should usually be reported to the landlord or property manager first."),
+      makeContact(input, "Code Enforcement", "Code Enforcement housing inspection", "Use code enforcement if the condition remains unresolved or appears unsafe.")
+    ],
+    Mold: [
+      makeContact(input, "Property Manager", "property manager maintenance mold", "Mold or water intrusion should usually be reported to the landlord or property manager first."),
+      makeContact(input, "Code Enforcement", "Code Enforcement housing inspection mold", "Use code enforcement if the issue is not addressed or appears unsafe.")
+    ],
+    "Broken streetlight": [
+      makeContact(input, "Utility Company", "streetlight outage utility", "Streetlight outages are often handled by the electric utility or a city streetlight team."),
+      makeContact(input, "City Public Works", "Public Works streetlight outage", "Public Works may route city-owned streetlight issues.")
+    ],
+    Flooding: [
+      makeContact(input, "Stormwater Department", "Stormwater drainage flooding", "Flooding, blocked drains, and runoff issues are commonly handled by stormwater staff."),
+      makeContact(input, "City Public Works", "Public Works drainage flooding", "Public Works may handle street drainage and blocked infrastructure.")
+    ],
+    "Damaged sign": [
+      makeContact(input, "Department of Transportation", "traffic sign maintenance", "Damaged traffic signs are commonly handled by transportation or road maintenance staff."),
+      makeContact(input, "City Public Works", "Public Works sign maintenance", "Local signs may be handled by Public Works.")
+    ],
+    "Unsafe wiring": [
+      makeContact(input, "Code Enforcement", "Code Enforcement unsafe wiring", "Unsafe wiring may require code enforcement or building inspection review."),
+      makeContact(input, "Utility Company", "electric utility emergency unsafe wire", "Use the utility emergency line if wires are exposed, downed, or sparking.")
+    ],
+    "Water damage": [
+      makeContact(input, "Property Manager", "property manager maintenance water damage", "Water damage in a rental should usually be reported to the landlord or property manager first."),
+      makeContact(input, "Code Enforcement", "Code Enforcement housing inspection water damage", "Use code enforcement if the issue remains unresolved or appears unsafe.")
+    ],
+    "Other local problem": [
+      makeContact(input, "City Public Works", "Public Works service request", "Public Works is a common starting point for local infrastructure issues."),
+      makeContact(input, "Code Enforcement", "Code Enforcement complaint", "Code enforcement may handle nuisance, safety, and property-condition issues."),
+      makeContact(input, "HOA", "HOA community manager contact", "HOAs or community managers may handle private roads, shared areas, and neighborhood rules.")
+    ]
   };
 
   const contacts = byCategory[input.category] ?? byCategory["Other local problem"];
-  return contacts.map((contact) => localize(contact, city)).slice(0, 3);
+  return contacts.slice(0, 3);
 }

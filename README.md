@@ -36,6 +36,10 @@ The public GitHub Pages demo is available at:
 
 GitHub Pages is static-only, so the hosted demo in `docs/` uses browser localStorage, browser image previews, mock AI, copy/mailto actions, and client-side PDF generation. The full Next.js/Prisma/SQLite implementation remains the local app described above.
 
+## Contact suggestions
+
+FixLocal AI estimates the responsible office type from the issue category and location. It does not display fake phone numbers or email addresses as real contact data. Instead, each contact suggestion includes an official lookup link and a verification note so users can confirm the current phone/email from a city, county, utility, landlord, property manager, or HOA source before sending.
+
 ## Environment
 
 Copy `.env.example` to `.env` if needed. This repository includes a local `.env` for development convenience:

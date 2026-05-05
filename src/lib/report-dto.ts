@@ -4,9 +4,11 @@ export type ContactDTO = {
   id: string;
   name: string;
   type: string;
-  email: string;
-  phone: string;
+  email: string | null;
+  phone: string | null;
   website: string;
+  lookupUrl: string | null;
+  verificationNote: string | null;
   reason: string;
   createdAt: string;
 };
@@ -93,6 +95,8 @@ export function toReportDTO(report: ReportWithRelations): ReportDTO {
         email: contact.email,
         phone: contact.phone,
         website: contact.website,
+        lookupUrl: contact.lookupUrl,
+        verificationNote: contact.verificationNote,
         reason: contact.reason,
         createdAt: contact.createdAt.toISOString()
       })) ?? [],

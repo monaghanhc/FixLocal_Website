@@ -72,15 +72,17 @@ model Report {
 }
 
 model SuggestedContact {
-  id        String   @id @default(cuid())
-  reportId  String
-  name      String
-  type      String
-  email     String
-  phone     String
-  website   String
-  reason    String
-  createdAt DateTime @default(now())
+  id               String   @id @default(cuid())
+  reportId         String
+  name             String
+  type             String
+  email            String?
+  phone            String?
+  website          String
+  lookupUrl        String?
+  verificationNote String?
+  reason           String
+  createdAt        DateTime @default(now())
 
   report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
 

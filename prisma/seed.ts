@@ -1,4 +1,4 @@
-import { PrismaClient, ReportStatus, Severity } from "@prisma/client";
+import { ContactConfidence, PrismaClient, ReportStatus, Severity } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -55,6 +55,8 @@ async function main() {
     "Mold",
     "Broken streetlight",
     "Drainage or flooding",
+    "Damaged sign",
+    "Unsafe wiring",
     "Unsafe building",
     "Downed tree",
     "Power line or utility hazard",
@@ -72,6 +74,154 @@ async function main() {
         responsibleDepartments: []
       }
     });
+  }
+
+  const sampleSource =
+    (await prisma.contactSource.findFirst({
+      where: { name: "ReportRight sample contact data (not verified)" }
+    })) ??
+    (await prisma.contactSource.create({
+      data: {
+        name: "ReportRight sample contact data (not verified)",
+        url: "https://github.com/monaghanhc/FixLocal_Website",
+        notes:
+          "Sample local routing records for development and tests. These are not verified official contacts and must be replaced or confirmed before production use."
+      }
+    }));
+
+  const sampleJurisdictions = [
+    { city: "Mount Pleasant", county: "Charleston", state: "SC", zipCode: null },
+    { city: "Charleston", county: "Charleston", state: "SC", zipCode: null },
+    { city: "North Charleston", county: "Charleston", state: "SC", zipCode: null },
+    { city: "Charleston County", county: "Charleston", state: "SC", zipCode: null },
+    { city: "Statewide", county: null, state: "SC", zipCode: null }
+  ];
+
+  const jurisdictionByKey = new Map<string, string>();
+  for (const jurisdiction of sampleJurisdictions) {
+    const existing = await prisma.jurisdiction.findFirst({
+      where: {
+        city: jurisdiction.city,
+        county: jurisdiction.county,
+        state: jurisdiction.state
+      }
+    });
+    const saved =
+      existing ??
+      (await prisma.jurisdiction.create({
+        data: {
+          ...jurisdiction,
+          country: "US",
+          source: "ReportRight sample contact data (not verified)",
+          sourceLastVerifiedAt: null
+        }
+      }));
+    jurisdictionByKey.set(`${jurisdiction.city}|${jurisdiction.county ?? ""}|${jurisdiction.state}`, saved.id);
+  }
+
+  const sampleContacts = [
+    {
+      key: "Mount Pleasant|Charleston|SC",
+      categorySlug: "pothole",
+      name: "Mount Pleasant Public Services Sample Contact",
+      organization: "Town of Mount Pleasant, SC",
+      department: "Public Services / Streets",
+      type: "City Public Works",
+      website:
+        "https://www.google.com/search?q=official+Mount+Pleasant+SC+public+services+pothole+contact",
+      reasonForRecommendation:
+        "Potholes on town-maintained roads are typically routed to public services or streets staff."
+    },
+    {
+      key: "Charleston|Charleston|SC",
+      categorySlug: "mold",
+      name: "Charleston Housing or Livability Sample Contact",
+      organization: "City of Charleston, SC",
+      department: "Housing, Livability, or Code Enforcement",
+      type: "Code Enforcement",
+      website:
+        "https://www.google.com/search?q=official+Charleston+SC+code+enforcement+housing+mold+contact",
+      reasonForRecommendation:
+        "Unresolved rental mold concerns may need landlord, property manager, housing, or code enforcement review."
+    },
+    {
+      key: "Charleston County|Charleston|SC",
+      categorySlug: "trash-or-illegal-dumping",
+      name: "Charleston County Solid Waste Sample Contact",
+      organization: "Charleston County, SC",
+      department: "Solid Waste or Environmental Management",
+      type: "Sanitation Department",
+      website:
+        "https://www.google.com/search?q=official+Charleston+County+SC+illegal+dumping+solid+waste+contact",
+      reasonForRecommendation:
+        "Illegal dumping outside city-maintained areas is often routed to county solid waste, sanitation, or code staff."
+    },
+    {
+      key: "North Charleston|Charleston|SC",
+      categorySlug: "unsafe-building",
+      name: "North Charleston Code Enforcement Sample Contact",
+      organization: "City of North Charleston, SC",
+      department: "Code Enforcement or Building Inspections",
+      type: "Code Enforcement",
+      website:
+        "https://www.google.com/search?q=official+North+Charleston+SC+code+enforcement+building+inspection+contact",
+      reasonForRecommendation:
+        "Unsafe building conditions are commonly reviewed by code enforcement or building inspections."
+    },
+    {
+      key: "Charleston|Charleston|SC",
+      categorySlug: "drainage-or-flooding",
+      name: "Charleston Stormwater Sample Contact",
+      organization: "City of Charleston, SC",
+      department: "Stormwater or Public Works",
+      type: "Stormwater Department",
+      website:
+        "https://www.google.com/search?q=official+Charleston+SC+stormwater+flooding+drainage+contact",
+      reasonForRecommendation:
+        "Drainage, flooding, blocked drains, and runoff issues are commonly routed to stormwater or public works staff."
+    },
+    {
+      key: "Statewide||SC",
+      categorySlug: "pothole",
+      name: "SCDOT State-Maintained Road Sample Contact",
+      organization: "South Carolina Department of Transportation",
+      department: "Maintenance / State DOT",
+      type: "Department of Transportation",
+      website:
+        "https://www.google.com/search?q=official+SCDOT+pothole+road+maintenance+contact",
+      reasonForRecommendation:
+        "A state DOT may handle potholes on state-maintained routes or highways."
+    }
+  ];
+
+  for (const contact of sampleContacts) {
+    const existing = await prisma.contact.findFirst({
+      where: {
+        name: contact.name,
+        organization: contact.organization
+      }
+    });
+    const data = {
+      jurisdictionId: jurisdictionByKey.get(contact.key),
+      sourceId: sampleSource.id,
+      categorySlug: contact.categorySlug,
+      name: contact.name,
+      organization: contact.organization,
+      department: contact.department,
+      type: contact.type,
+      email: null,
+      phone: null,
+      website: contact.website,
+      confidence: ContactConfidence.LOW,
+      reasonForRecommendation: `${contact.reasonForRecommendation} Sample data only; verify the official contact before sending.`,
+      active: true
+    };
+
+    if (existing) {
+      await prisma.contact.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.contact.create({ data });
+    }
   }
 
   await prisma.report.deleteMany({ where: { userId: demoUser.id } });

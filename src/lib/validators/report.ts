@@ -38,6 +38,9 @@ export const contactSchema = z.object({
 export const routingDecisionSchema = z.object({
   suggestedContacts: z.array(contactSchema),
   confidenceScore: z.number().min(0).max(1),
+  confidenceLabel: z.enum(["HIGH", "MEDIUM", "LOW"]),
+  issueCategory: z.string().min(1),
+  likelyJurisdiction: z.string().min(1),
   explanation: z.string().min(1),
   fallbackWarnings: z.array(z.string()),
   manualReviewRequired: z.boolean(),
@@ -80,6 +83,17 @@ export const saveReportSchema = z
     path: ["recipientConfirmation", "verified"],
     message: "Verify or manually enter the recipient before saving."
   })
+  .refine(
+    (value) => {
+      if (value.recipientConfirmation.manualContact) return true;
+      const index = value.recipientConfirmation.selectedContactIndex;
+      return typeof index === "number" && index >= 0 && index < value.contacts.length;
+    },
+    {
+      path: ["recipientConfirmation", "selectedContactIndex"],
+      message: "Select a suggested contact or manually enter a recipient before saving."
+    }
+  )
   .refine(
     (value) =>
       !value.routingDecision.emergencyWarningRequired ||

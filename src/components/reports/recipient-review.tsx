@@ -3,6 +3,7 @@
 import { AlertTriangle, CheckCircle2, ExternalLink, ShieldCheck } from "lucide-react";
 import type { SuggestedContactDTO } from "@/lib/contacts/directory";
 import type { ContactRoutingResult } from "@/lib/contact-routing/types";
+import { legalDisclaimers } from "@/lib/legal/disclaimers";
 import { recipientConfirmationComplete } from "@/lib/recipient-confirmation";
 import { cn } from "@/lib/utils";
 
@@ -62,14 +63,14 @@ export function RecipientReview({ contacts, routingDecision, value, onChange }: 
       <p className="text-sm font-bold uppercase tracking-wide text-civic-teal">Recipient review</p>
       <h2 className="mt-1 text-2xl font-bold text-civic-ink">Confirm who should receive this report</h2>
       <p className="mt-2 text-sm leading-6 text-slate-600">
-        ReportRight AI suggests this recipient based on your issue type and location. Please verify
-        before sending.
+        ReportRight AI suggests recipients based on your issue type and location. Please verify the
+        contact before sending.
       </p>
 
       {routingDecision.manualReviewRequired ? (
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
           We could not confidently verify the correct recipient. Please review the suggested
-          contacts or manually enter the recipient before sending.
+          contacts or manually enter the recipient before continuing.
         </div>
       ) : null}
 
@@ -78,8 +79,8 @@ export function RecipientReview({ contacts, routingDecision, value, onChange }: 
           <div className="flex gap-2">
             <AlertTriangle className="mt-0.5 h-4 w-4 flex-none" />
             <p>
-              This may involve immediate danger. For emergencies or immediate danger, call
-              emergency services before using this report workflow.
+              If this is an emergency or there is immediate danger, call emergency services. Do not
+              rely on this app for emergencies.
             </p>
           </div>
           <label className="mt-3 flex items-start gap-2 font-semibold">
@@ -93,6 +94,18 @@ export function RecipientReview({ contacts, routingDecision, value, onChange }: 
           </label>
         </div>
       ) : null}
+
+      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
+        <p className="font-semibold text-civic-ink">
+          Routing confidence: {routingDecision.confidenceLabel} ({Math.round(routingDecision.confidenceScore * 100)}%)
+        </p>
+        <p className="mt-1">{routingDecision.explanation}</p>
+        <ul className="mt-3 list-disc space-y-1 pl-5">
+          {legalDisclaimers.map((disclaimer) => (
+            <li key={disclaimer}>{disclaimer}</li>
+          ))}
+        </ul>
+      </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {contacts.map((contact, index) => (
@@ -117,6 +130,9 @@ export function RecipientReview({ contacts, routingDecision, value, onChange }: 
               <div>
                 <h3 className="font-bold text-civic-ink">{contact.name}</h3>
                 <p className="mt-1 text-sm font-semibold text-civic-blue">{contact.department}</p>
+                <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {contact.organization}
+                </p>
               </div>
               <span className="rounded-full bg-white px-2.5 py-1 text-xs font-bold text-slate-700 ring-1 ring-slate-200">
                 {contact.confidence}
@@ -137,6 +153,10 @@ export function RecipientReview({ contacts, routingDecision, value, onChange }: 
                 <dd>
                   {contact.email || "Verify email"} / {contact.phone || "Verify phone"}
                 </dd>
+              </div>
+              <div>
+                <dt className="font-bold text-slate-700">Website</dt>
+                <dd className="break-all">{contact.website}</dd>
               </div>
             </dl>
             <a

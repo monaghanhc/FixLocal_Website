@@ -65,6 +65,9 @@ export type ReportDTO = {
 
 export type RoutingDecisionDTO = {
   confidenceScore: number;
+  confidenceLabel: RoutingConfidence;
+  issueCategory: string;
+  likelyJurisdiction: string;
   explanation: string;
   fallbackWarnings: string[];
   manualReviewRequired: boolean;
@@ -148,6 +151,9 @@ export function toReportDTO(report: ReportWithRelations): ReportDTO {
     routingDecision: report.routingDecision
       ? {
           confidenceScore: report.routingDecision.confidenceScore,
+          confidenceLabel: report.routingDecision.confidenceLabel as RoutingConfidence,
+          issueCategory: report.routingDecision.issueCategory,
+          likelyJurisdiction: report.routingDecision.likelyJurisdiction,
           explanation: report.routingDecision.explanation,
           fallbackWarnings: missingDetails(report.routingDecision.fallbackWarnings),
           manualReviewRequired: report.routingDecision.manualReviewRequired,

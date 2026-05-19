@@ -6,6 +6,9 @@ import type { ContactRoutingResult } from "@/lib/contact-routing/types";
 const baseRouting: ContactRoutingResult = {
   suggestedContacts: [],
   confidenceScore: 0.4,
+  confidenceLabel: "LOW",
+  issueCategory: "Other local problem",
+  likelyJurisdiction: "Unknown jurisdiction",
   explanation: "Manual review required.",
   fallbackWarnings: [],
   manualReviewRequired: true,
@@ -38,10 +41,29 @@ describe("recipient confirmation and disclaimers", () => {
       recipientConfirmationComplete({
         selectedContactIndex: null,
         manualMode: true,
+        manualContact: {
+          name: "Property Manager",
+          email: "manager@example.test"
+        },
         verified: true,
         emergencyAcknowledged: false
       }, baseRouting)
     ).toBe(true);
+  });
+
+  it("does not accept an empty manual recipient as complete", () => {
+    expect(
+      recipientConfirmationComplete({
+        selectedContactIndex: null,
+        manualMode: true,
+        manualContact: {
+          name: "",
+          website: ""
+        },
+        verified: true,
+        emergencyAcknowledged: false
+      }, baseRouting)
+    ).toBe(false);
   });
 
   it("requires emergency acknowledgement when warning is present", () => {

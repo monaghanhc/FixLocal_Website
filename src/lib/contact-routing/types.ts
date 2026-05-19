@@ -17,6 +17,7 @@ export type ContactRoutingInput = {
   state?: string | null;
   zipCode?: string | null;
   urgent?: boolean | null;
+  manualRecipient?: RoutedContact | null;
 };
 
 export type RoutedContact = {
@@ -39,6 +40,9 @@ export type RoutedContact = {
 export type ContactRoutingResult = {
   suggestedContacts: RoutedContact[];
   confidenceScore: number;
+  confidenceLabel: RoutingConfidence;
+  issueCategory: string;
+  likelyJurisdiction: string;
   explanation: string;
   fallbackWarnings: string[];
   manualReviewRequired: boolean;
@@ -48,9 +52,11 @@ export type ContactRoutingResult = {
 export type VerifiedContactRecord = {
   id: string;
   category: string;
-  city: string;
+  city?: string | null;
   county?: string | null;
   state: string;
   zipCode?: string | null;
+  jurisdictionLevel: "city" | "county" | "state";
+  sourceKind: "verified-exact" | "verified-general" | "sample";
   contact: Omit<RoutedContact, "confidence" | "reasonForRecommendation">;
 };

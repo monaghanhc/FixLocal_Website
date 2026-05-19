@@ -82,6 +82,9 @@ export async function POST(request: Request) {
         routingDecision: {
           create: {
             confidenceScore: routingDecision.confidenceScore,
+            confidenceLabel: routingDecision.confidenceLabel,
+            issueCategory: routingDecision.issueCategory,
+            likelyJurisdiction: routingDecision.likelyJurisdiction,
             explanation: routingDecision.explanation,
             fallbackWarnings: routingDecision.fallbackWarnings,
             manualReviewRequired: routingDecision.manualReviewRequired,

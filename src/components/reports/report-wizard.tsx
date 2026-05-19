@@ -27,8 +27,8 @@ const steps = [
   "Upload photo",
   "Describe issue",
   "AI analysis",
-  "Generated report",
   "Recipient review",
+  "Generated report",
   "Review and save"
 ];
 
@@ -69,6 +69,12 @@ export function ReportWizard() {
   const [initialStatus, setInitialStatus] = useState("DRAFT");
 
   const location = `${form.address}, ${form.city}, ${form.state} ${form.zip}`.replace(/,\s*,/g, ",");
+  const recipientReviewComplete = recipientConfirmationComplete(recipientConfirmation, routingDecision);
+  const selectedRecipient = recipientConfirmation.manualMode
+    ? recipientConfirmation.manualContact
+    : typeof recipientConfirmation.selectedContactIndex === "number"
+      ? contacts[recipientConfirmation.selectedContactIndex]
+      : contacts[0];
   const pdfData = useMemo(() => {
     if (!ai) return null;
     return {
@@ -83,6 +89,13 @@ export function ReportWizard() {
       messages: ai.messages
     };
   }, [ai, contacts, form, location]);
+
+  function canOpenStep(index: number) {
+    if (index <= step) return true;
+    if (!ai) return false;
+    if (index >= 4 && !recipientReviewComplete) return false;
+    return true;
+  }
 
   function setField<K extends keyof ReportInputValues>(key: K, value: ReportInputValues[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -153,7 +166,7 @@ export function ReportWizard() {
       toast.error("Generate the AI report before saving.");
       return;
     }
-    if (!recipientConfirmationComplete(recipientConfirmation, routingDecision)) {
+    if (!recipientReviewComplete) {
       toast.error("Verify the recipient before saving.");
       return;
     }
@@ -261,13 +274,13 @@ export function ReportWizard() {
                 key={label}
                 type="button"
                 onClick={() => {
-                  if (index <= step || ai) setStep(index);
+                  if (canOpenStep(index)) setStep(index);
                 }}
                 className={cn(
                   "focus-ring flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold transition",
                   step === index
                     ? "bg-civic-ink text-white"
-                    : index < step || ai
+                    : canOpenStep(index)
                       ? "bg-slate-50 text-slate-700 hover:bg-slate-100"
                       : "cursor-not-allowed bg-white text-slate-400"
                 )}
@@ -480,7 +493,27 @@ export function ReportWizard() {
                   </p>
                 </div>
               ) : ai ? (
-                <AIAnalysisCard analysis={ai.analysis} />
+                <div className="space-y-5">
+                  <AIAnalysisCard analysis={ai.analysis} />
+                  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-card">
+                    <p className="text-sm font-bold uppercase tracking-wide text-civic-teal">
+                      Confirm category
+                    </p>
+                    <h2 className="mt-1 text-xl font-bold text-civic-ink">
+                      Confirm or edit the issue category before routing
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      The recipient suggestions use your confirmed category and location. If this
+                      category is wrong, choose the best match and generate again.
+                    </p>
+                    <div className="mt-4">
+                      <CategorySelector
+                        value={form.category}
+                        onChange={(value) => setField("category", value as ReportInputValues["category"])}
+                      />
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
                   <p className="text-sm text-slate-600">Generate analysis from the issue details.</p>
@@ -497,15 +530,7 @@ export function ReportWizard() {
           </section>
         ) : null}
 
-        {step === 3 && ai ? (
-          <GeneratedMessagesTabs
-            messages={ai.messages}
-            subjectLine={ai.messages.subjectLine}
-            mailtoEmail={contacts[0]?.email}
-          />
-        ) : null}
-
-        {step === 4 && routingDecision ? (
+        {step === 3 && routingDecision ? (
           <div className="space-y-5">
             <ContactSuggestions contacts={contacts} routingDecision={routingDecision} />
             <RecipientReview
@@ -515,6 +540,14 @@ export function ReportWizard() {
               onChange={setRecipientConfirmation}
             />
           </div>
+        ) : null}
+
+        {step === 4 && ai && recipientReviewComplete ? (
+          <GeneratedMessagesTabs
+            messages={ai.messages}
+            subjectLine={ai.messages.subjectLine}
+            mailtoEmail={selectedRecipient?.email}
+          />
         ) : null}
 
         {step === 5 && ai ? (
@@ -612,16 +645,16 @@ export function ReportWizard() {
                   return;
                 }
                 if (
-                  step === 4 &&
+                  step === 3 &&
                   routingDecision &&
-                  !recipientConfirmationComplete(recipientConfirmation, routingDecision)
+                  !recipientReviewComplete
                 ) {
                   toast.error("Verify the recipient before continuing.");
                   return;
                 }
                 setStep((current) => Math.min(5, current + 1));
               }}
-              disabled={analyzing}
+              disabled={analyzing || (step === 3 && !recipientReviewComplete)}
               className="focus-ring inline-flex items-center justify-center gap-2 rounded-lg bg-civic-ink px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
             >
               Continue

@@ -20,8 +20,9 @@ export function ContactSuggestions({ contacts, routingDecision }: ContactSuggest
       {routingDecision ? (
         <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-700">
           <p className="font-semibold text-civic-ink">
-            Routing confidence: {Math.round(routingDecision.confidenceScore * 100)}%
+            Routing confidence: {routingDecision.confidenceLabel} ({Math.round(routingDecision.confidenceScore * 100)}%)
           </p>
+          <p className="mt-1 font-medium">Likely jurisdiction: {routingDecision.likelyJurisdiction}</p>
           <p className="mt-1">{routingDecision.explanation}</p>
           {routingDecision.fallbackWarnings.length > 0 ? (
             <ul className="mt-2 list-disc space-y-1 pl-5">

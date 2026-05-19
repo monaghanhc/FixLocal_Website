@@ -205,6 +205,9 @@ model RoutingDecision {
   id                       String   @id @default(cuid())
   reportId                 String   @unique
   confidenceScore          Float
+  confidenceLabel          ContactConfidence @default(LOW)
+  issueCategory            String   @default("")
+  likelyJurisdiction       String   @default("")
   explanation              String
   fallbackWarnings         Json
   manualReviewRequired     Boolean

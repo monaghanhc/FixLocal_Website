@@ -71,6 +71,13 @@ export function ReportDetailClient({ initialReport }: { initialReport: ReportDTO
     [analysis, messages, report]
   );
 
+  const routingDecision = report.routingDecision
+    ? {
+        ...report.routingDecision,
+        suggestedContacts: report.contacts
+      }
+    : null;
+
   async function saveUpdates() {
     setSaving(true);
     try {
@@ -131,7 +138,7 @@ export function ReportDetailClient({ initialReport }: { initialReport: ReportDTO
         </section>
 
         <AIAnalysisCard analysis={analysis} />
-        <ContactSuggestions contacts={report.contacts} />
+        <ContactSuggestions contacts={report.contacts} routingDecision={routingDecision} />
         <GeneratedMessagesTabs
           messages={messages}
           subjectLine={messages.subjectLine}

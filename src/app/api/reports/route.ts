@@ -15,6 +15,7 @@ export async function GET() {
     where: { userId: user.id },
     include: {
       contacts: true,
+      routingDecision: true,
       statusHistory: { orderBy: { createdAt: "asc" } }
     },
     orderBy: { updatedAt: "desc" }
@@ -40,7 +41,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { input, ai, contacts } = parsed.data;
+    const { input, ai, contacts, routingDecision, recipientConfirmation } = parsed.data;
+    const selectedContact =
+      recipientConfirmation.manualContact ??
+      contacts[recipientConfirmation.selectedContactIndex ?? 0] ??
+      contacts[0];
     const report = await prisma.report.create({
       data: {
         userId: user.id,
@@ -49,8 +54,11 @@ export async function POST(request: Request) {
         category: input.category,
         address: input.address,
         city: input.city,
+        county: input.county || null,
         state: input.state,
         zip: input.zip,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
         dateObserved: new Date(input.dateObserved),
         urgent: input.urgent,
         optionalNotes: input.optionalNotes || null,
@@ -65,8 +73,22 @@ export async function POST(request: Request) {
         smsMessage: ai.messages.smsMessage,
         printableReport: ai.messages.printableReport,
         followUpMessage: ai.messages.followUpMessage,
+        recipientConfirmed: recipientConfirmation.verified,
+        selectedContactSnapshot: selectedContact,
+        emergencyAcknowledged: recipientConfirmation.emergencyAcknowledged,
         contacts: {
           create: contacts
+        },
+        routingDecision: {
+          create: {
+            confidenceScore: routingDecision.confidenceScore,
+            explanation: routingDecision.explanation,
+            fallbackWarnings: routingDecision.fallbackWarnings,
+            manualReviewRequired: routingDecision.manualReviewRequired,
+            emergencyWarningRequired: routingDecision.emergencyWarningRequired,
+            selectedContactSnapshot: selectedContact,
+            userVerifiedContact: recipientConfirmation.verified
+          }
         },
         statusHistory: {
           create: {
@@ -77,6 +99,7 @@ export async function POST(request: Request) {
       },
       include: {
         contacts: true,
+        routingDecision: true,
         statusHistory: { orderBy: { createdAt: "asc" } }
       }
     });

@@ -8,7 +8,7 @@ export default function AboutPage() {
         </h1>
         <div className="mt-6 space-y-4 text-base leading-7 text-slate-700">
           <p>
-            FixLocal AI helps residents, tenants, and property stakeholders turn a photo and a few
+            ReportRight AI helps residents, tenants, and property stakeholders turn a photo and a few
             details into a clear report. The app is designed to run for free on a local machine
             with SQLite, local uploads, mock contact lookup, and a mock AI provider.
           </p>

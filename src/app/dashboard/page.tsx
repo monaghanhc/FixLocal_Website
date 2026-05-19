@@ -14,6 +14,7 @@ export default async function DashboardPage() {
     where: { userId: user.id },
     include: {
       contacts: true,
+      routingDecision: true,
       statusHistory: { orderBy: { createdAt: "asc" } }
     },
     orderBy: { updatedAt: "desc" }

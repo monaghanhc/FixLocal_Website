@@ -23,6 +23,19 @@ enum Severity {
   URGENT
 }
 
+enum ContactConfidence {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum SubscriptionStatus {
+  FREE
+  ACTIVE
+  CANCELED_ACTIVE
+  EXPIRED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -32,7 +45,10 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  reports Report[]
+  reports       Report[]
+  uploadedImages UploadedImage[]
+  entitlements  UserEntitlement[]
+  usageCounters UsageCounter[]
 }
 
 model Report {
@@ -43,8 +59,11 @@ model Report {
   category                   String
   address                    String
   city                       String
+  county                     String?
   state                      String
   zip                        String
+  latitude                   Float?
+  longitude                  Float?
   dateObserved               DateTime
   urgent                     Boolean      @default(false)
   optionalNotes              String?
@@ -59,12 +78,17 @@ model Report {
   smsMessage                 String?
   printableReport            String?
   followUpMessage            String?
+  recipientConfirmed         Boolean      @default(false)
+  selectedContactSnapshot    Json?
+  emergencyAcknowledged      Boolean      @default(false)
   createdAt                  DateTime     @default(now())
   updatedAt                  DateTime     @updatedAt
 
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   contacts        SuggestedContact[]
   statusHistory   StatusHistory[]
+  uploadedImages  UploadedImage[]
+  routingDecision RoutingDecision?
 
   @@index([userId])
   @@index([status])
@@ -75,11 +99,17 @@ model SuggestedContact {
   id               String   @id @default(cuid())
   reportId         String
   name             String
+  organization     String   @default("")
+  department       String   @default("")
   type             String
   email            String?
   phone            String?
   website          String
   lookupUrl        String?
+  source           String   @default("Official-source lookup required")
+  sourceLastVerifiedAt String?
+  confidence       ContactConfidence @default(LOW)
+  reasonForRecommendation String @default("")
   verificationNote String?
   reason           String
   createdAt        DateTime @default(now())
@@ -87,6 +117,154 @@ model SuggestedContact {
   report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
   @@index([reportId])
+}
+
+model UploadedImage {
+  id           String   @id @default(cuid())
+  userId       String
+  reportId     String?
+  imagePath    String
+  originalName String?
+  mimeType     String?
+  sizeBytes    Int?
+  createdAt    DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  report Report? @relation(fields: [reportId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([reportId])
+}
+
+model IssueCategory {
+  id                     String   @id @default(cuid())
+  slug                   String   @unique
+  label                  String
+  responsibleDepartments Json
+  emergencyKeywords      Json?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+}
+
+model Jurisdiction {
+  id                   String   @id @default(cuid())
+  city                 String
+  county               String?
+  state                String
+  zipCode              String?
+  country              String   @default("US")
+  source               String?
+  sourceLastVerifiedAt String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  contacts Contact[]
+
+  @@index([city, state])
+  @@index([county, state])
+}
+
+model ContactSource {
+  id             String   @id @default(cuid())
+  name           String
+  url            String
+  lastVerifiedAt DateTime?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  contacts Contact[]
+}
+
+model Contact {
+  id                      String            @id @default(cuid())
+  jurisdictionId          String?
+  sourceId                String?
+  categorySlug            String?
+  name                    String
+  organization            String
+  department              String
+  type                    String
+  email                   String?
+  phone                   String?
+  website                 String
+  confidence              ContactConfidence @default(LOW)
+  reasonForRecommendation String
+  active                  Boolean           @default(true)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  jurisdiction Jurisdiction? @relation(fields: [jurisdictionId], references: [id], onDelete: SetNull)
+  source       ContactSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([jurisdictionId])
+  @@index([categorySlug])
+}
+
+model RoutingDecision {
+  id                       String   @id @default(cuid())
+  reportId                 String   @unique
+  confidenceScore          Float
+  explanation              String
+  fallbackWarnings         Json
+  manualReviewRequired     Boolean
+  emergencyWarningRequired Boolean
+  selectedContactSnapshot  Json?
+  userVerifiedContact      Boolean  @default(false)
+  createdAt                DateTime @default(now())
+
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+}
+
+model SubscriptionPlan {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  priceCents      Int
+  interval        String
+  reportLimit     Int?
+  features        Json
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  entitlements UserEntitlement[]
+}
+
+model UserEntitlement {
+  id                   String             @id @default(cuid())
+  userId               String
+  planId               String?
+  status               SubscriptionStatus @default(FREE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  provider             String?
+  providerCustomerId   String?
+  providerSubscriptionId String?
+  manageUrl            String?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan SubscriptionPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model UsageCounter {
+  id        String   @id @default(cuid())
+  userId    String
+  periodKey String
+  action    String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, periodKey, action])
+  @@index([periodKey])
 }
 
 model StatusHistory {

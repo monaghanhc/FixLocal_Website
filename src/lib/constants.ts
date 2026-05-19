@@ -5,10 +5,15 @@ export const issueCategories = [
   "Unsafe rental condition",
   "Mold",
   "Broken streetlight",
-  "Flooding",
+  "Drainage or flooding",
   "Damaged sign",
   "Unsafe wiring",
+  "Unsafe building",
+  "Downed tree",
+  "Power line or utility hazard",
+  "Water leak",
   "Water damage",
+  "HOA issue",
   "Other local problem"
 ] as const;
 
@@ -32,5 +37,13 @@ export const responsibleParties = [
   "Utility Company",
   "Sanitation Department",
   "Stormwater Department",
+  "Housing Authority",
+  "Building Inspections",
+  "Parks Department",
+  "Water Department",
+  "Emergency Services",
   "Other"
 ] as const;
+
+export const productName = "ReportRight AI";
+export const legacyProductName = "FixLocal AI";

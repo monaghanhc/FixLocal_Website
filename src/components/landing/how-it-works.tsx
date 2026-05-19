@@ -8,7 +8,7 @@ const steps = [
   },
   {
     title: "Add location and description",
-    text: "Capture the address, category, date observed, urgency, and notes.",
+    text: "Confirm address, jurisdiction, category, urgency, and notes.",
     icon: MapPinned
   },
   {
@@ -17,8 +17,8 @@ const steps = [
     icon: Bot
   },
   {
-    title: "Send it to the right contact",
-    text: "Use local mock directory suggestions, mailto links, and copy buttons.",
+    title: "Review the recipient",
+    text: "See why a contact was suggested, verify the source, or manually enter a recipient.",
     icon: Mail
   },
   {
@@ -35,7 +35,7 @@ export function HowItWorks() {
         <div className="max-w-2xl">
           <p className="text-sm font-bold uppercase tracking-wide text-civic-teal">How it works</p>
           <h2 className="mt-3 text-3xl font-bold tracking-normal text-civic-ink sm:text-4xl">
-            A practical workflow for civic and property reports
+            A practical workflow for civic, rental, HOA, and property reports
           </h2>
         </div>
         <div className="mt-10 grid gap-4 md:grid-cols-5">

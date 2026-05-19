@@ -30,7 +30,7 @@ const examples = [
     icon: Recycle
   },
   {
-    title: "Flooding",
+    title: "Drainage / flooding",
     contact: "Stormwater",
     severity: "High",
     color: "bg-cyan-50 text-cyan-700",

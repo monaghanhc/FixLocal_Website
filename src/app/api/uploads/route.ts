@@ -3,6 +3,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -48,6 +49,15 @@ export async function POST(request: Request) {
     const filePath = path.join(uploadsDir, fileName);
     const bytes = Buffer.from(await file.arrayBuffer());
     await writeFile(filePath, bytes);
+    await prisma.uploadedImage.create({
+      data: {
+        userId: user.id,
+        imagePath: `/uploads/${fileName}`,
+        originalName: file.name,
+        mimeType: file.type,
+        sizeBytes: file.size
+      }
+    });
 
     return NextResponse.json({
       imagePath: `/uploads/${fileName}`,

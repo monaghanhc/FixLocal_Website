@@ -40,9 +40,15 @@ function detectIssueType(input: AIReportInput) {
     Mold: "Indoor moisture and possible mold",
     "Broken streetlight": "Streetlight outage",
     Flooding: "Drainage or stormwater concern",
+    "Drainage or flooding": "Drainage or stormwater concern",
     "Damaged sign": "Damaged public sign",
     "Unsafe wiring": "Electrical safety hazard",
+    "Unsafe building": "Building safety concern",
+    "Downed tree": "Downed tree or blocked right-of-way",
+    "Power line or utility hazard": "Utility safety hazard",
+    "Water leak": "Water service leak",
     "Water damage": "Water intrusion and damage",
+    "HOA issue": "HOA or managed-property concern",
     "Other local problem": "Local service request"
   };
 
@@ -68,9 +74,15 @@ function responsibleParty(input: AIReportInput): ResponsibleParty {
     Mold: "Property Manager",
     "Broken streetlight": "Utility Company",
     Flooding: "Stormwater Department",
+    "Drainage or flooding": "Stormwater Department",
     "Damaged sign": "Department of Transportation",
     "Unsafe wiring": "Code Enforcement",
+    "Unsafe building": "Building Inspections",
+    "Downed tree": "City Public Works",
+    "Power line or utility hazard": "Utility Company",
+    "Water leak": "Water Department",
     "Water damage": "Property Manager",
+    "HOA issue": "HOA",
     "Other local problem": "Other"
   };
 
@@ -92,9 +104,15 @@ function missingDetails(input: AIReportInput) {
     Mold: ["Source of moisture or leak", "Whether anyone has symptoms"],
     "Broken streetlight": ["Pole number if visible", "Whether the outage affects an intersection"],
     Flooding: ["Depth of standing water", "Whether drains are blocked"],
+    "Drainage or flooding": ["Depth of standing water", "Whether drains are blocked"],
     "Damaged sign": ["Sign type and direction of travel", "Whether visibility is obstructed"],
     "Unsafe wiring": ["Whether wires are exposed or sparking", "Whether power has been shut off"],
+    "Unsafe building": ["Visible structural damage", "Whether anyone is currently at risk"],
+    "Downed tree": ["Whether the road, sidewalk, or driveway is blocked", "Whether wires are involved"],
+    "Power line or utility hazard": ["Whether wires are down, exposed, or sparking", "Whether anyone is nearby"],
+    "Water leak": ["Whether the leak is in the street, yard, or building", "Whether water is actively flowing"],
     "Water damage": ["Likely source of water", "Whether the material is soft or sagging"],
+    "HOA issue": ["HOA or property manager name if known", "Relevant rule, area, or shared facility"],
     "Other local problem": ["Who is affected", "Best access point for inspection"]
   };
 
@@ -131,11 +149,11 @@ Summary: ${input.description}
 ${urgentLine} I have a photo available as an attachment or reference image. Please inspect the location and let me know what action can be taken or which office should handle this if it is outside your department.${notes}
 
 Thank you,
-FixLocal AI user`;
+ReportRight AI user`;
 
   const smsMessage = `${input.title} at ${location}. Observed ${date}. ${input.description} Severity estimate: ${severity}. Photo available. Please inspect or route to ${party}.`;
 
-  const printableReport = `FixLocal AI Report
+  const printableReport = `ReportRight AI Report
 
 Issue: ${input.title}
 Category: ${input.category}

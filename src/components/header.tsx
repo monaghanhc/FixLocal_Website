@@ -14,7 +14,7 @@ export function Header({ user }: HeaderProps) {
           <span className="grid h-9 w-9 place-items-center rounded-lg bg-civic-ink text-white">
             <MapPin className="h-5 w-5" />
           </span>
-          <span className="text-base font-bold tracking-tight text-civic-ink">FixLocal AI</span>
+          <span className="text-base font-bold tracking-tight text-civic-ink">ReportRight AI</span>
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
@@ -24,9 +24,17 @@ export function Header({ user }: HeaderProps) {
           <Link className="transition hover:text-civic-ink" href="/privacy">
             Privacy
           </Link>
+          <Link className="transition hover:text-civic-ink" href="/pricing">
+            Pricing
+          </Link>
           {user ? (
             <Link className="transition hover:text-civic-ink" href="/dashboard">
               Dashboard
+            </Link>
+          ) : null}
+          {user ? (
+            <Link className="transition hover:text-civic-ink" href="/settings">
+              Settings
             </Link>
           ) : null}
         </nav>

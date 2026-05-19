@@ -14,6 +14,7 @@ async function loadReport(id: string, userId: string) {
     where: { id, userId },
     include: {
       contacts: true,
+      routingDecision: true,
       statusHistory: { orderBy: { createdAt: "asc" } }
     }
   });
@@ -74,6 +75,7 @@ export async function PATCH(request: Request, context: Context) {
       },
       include: {
         contacts: true,
+        routingDecision: true,
         statusHistory: { orderBy: { createdAt: "asc" } }
       }
     });

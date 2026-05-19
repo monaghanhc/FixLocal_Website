@@ -10,8 +10,11 @@ export type AIReportInput = {
   category: IssueCategory;
   address: string;
   city: string;
+  county?: string | null;
   state: string;
   zip: string;
+  latitude?: number | null;
+  longitude?: number | null;
   dateObserved: string;
   urgent: boolean;
   optionalNotes?: string | null;

@@ -9,7 +9,7 @@ export function EmptyState() {
       </div>
       <h2 className="mt-4 text-lg font-semibold text-civic-ink">No reports yet</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-slate-600">
-        Start with a photo and a few details. FixLocal AI will prepare the messages and contact
+        Start with a photo and a few details. ReportRight AI will prepare the messages and contact
         suggestions.
       </p>
       <Link

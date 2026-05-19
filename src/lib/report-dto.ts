@@ -1,13 +1,20 @@
-import type { Report, StatusHistory, SuggestedContact } from "@prisma/client";
+import type { Report, RoutingDecision, StatusHistory, SuggestedContact } from "@prisma/client";
+import type { RoutingConfidence } from "@/lib/contact-routing/types";
 
 export type ContactDTO = {
   id: string;
   name: string;
+  organization: string;
+  department: string;
   type: string;
   email: string | null;
   phone: string | null;
   website: string;
   lookupUrl: string | null;
+  source: string;
+  sourceLastVerifiedAt: string | null;
+  confidence: RoutingConfidence;
+  reasonForRecommendation: string;
   verificationNote: string | null;
   reason: string;
   createdAt: string;
@@ -27,8 +34,11 @@ export type ReportDTO = {
   category: string;
   address: string;
   city: string;
+  county: string | null;
   state: string;
   zip: string;
+  latitude: number | null;
+  longitude: number | null;
   dateObserved: string;
   urgent: boolean;
   optionalNotes: string | null;
@@ -43,15 +53,31 @@ export type ReportDTO = {
   smsMessage: string | null;
   printableReport: string | null;
   followUpMessage: string | null;
+  recipientConfirmed: boolean;
+  selectedContactSnapshot: unknown;
+  emergencyAcknowledged: boolean;
   createdAt: string;
   updatedAt: string;
   contacts: ContactDTO[];
   statusHistory: StatusHistoryDTO[];
+  routingDecision: RoutingDecisionDTO | null;
+};
+
+export type RoutingDecisionDTO = {
+  confidenceScore: number;
+  explanation: string;
+  fallbackWarnings: string[];
+  manualReviewRequired: boolean;
+  emergencyWarningRequired: boolean;
+  userVerifiedContact: boolean;
+  selectedContactSnapshot: unknown;
+  createdAt: string;
 };
 
 type ReportWithRelations = Report & {
   contacts?: SuggestedContact[];
   statusHistory?: StatusHistory[];
+  routingDecision?: RoutingDecision | null;
 };
 
 function missingDetails(value: unknown): string[] {
@@ -69,8 +95,11 @@ export function toReportDTO(report: ReportWithRelations): ReportDTO {
     category: report.category,
     address: report.address,
     city: report.city,
+    county: report.county,
     state: report.state,
     zip: report.zip,
+    latitude: report.latitude,
+    longitude: report.longitude,
     dateObserved: report.dateObserved.toISOString(),
     urgent: report.urgent,
     optionalNotes: report.optionalNotes,
@@ -85,17 +114,26 @@ export function toReportDTO(report: ReportWithRelations): ReportDTO {
     smsMessage: report.smsMessage,
     printableReport: report.printableReport,
     followUpMessage: report.followUpMessage,
+    recipientConfirmed: report.recipientConfirmed,
+    selectedContactSnapshot: report.selectedContactSnapshot,
+    emergencyAcknowledged: report.emergencyAcknowledged,
     createdAt: report.createdAt.toISOString(),
     updatedAt: report.updatedAt.toISOString(),
     contacts:
       report.contacts?.map((contact) => ({
         id: contact.id,
         name: contact.name,
+        organization: contact.organization,
+        department: contact.department,
         type: contact.type,
         email: contact.email,
         phone: contact.phone,
         website: contact.website,
         lookupUrl: contact.lookupUrl,
+        source: contact.source,
+        sourceLastVerifiedAt: contact.sourceLastVerifiedAt,
+        confidence: contact.confidence as RoutingConfidence,
+        reasonForRecommendation: contact.reasonForRecommendation,
         verificationNote: contact.verificationNote,
         reason: contact.reason,
         createdAt: contact.createdAt.toISOString()
@@ -106,6 +144,18 @@ export function toReportDTO(report: ReportWithRelations): ReportDTO {
         status: entry.status,
         note: entry.note,
         createdAt: entry.createdAt.toISOString()
-      })) ?? []
+      })) ?? [],
+    routingDecision: report.routingDecision
+      ? {
+          confidenceScore: report.routingDecision.confidenceScore,
+          explanation: report.routingDecision.explanation,
+          fallbackWarnings: missingDetails(report.routingDecision.fallbackWarnings),
+          manualReviewRequired: report.routingDecision.manualReviewRequired,
+          emergencyWarningRequired: report.routingDecision.emergencyWarningRequired,
+          userVerifiedContact: report.routingDecision.userVerifiedContact,
+          selectedContactSnapshot: report.routingDecision.selectedContactSnapshot,
+          createdAt: report.routingDecision.createdAt.toISOString()
+        }
+      : null
   };
 }

@@ -97,7 +97,7 @@ export function PDFDownloadButton({ data }: { data: PDFReportData }) {
       doc.setFontSize(10);
       addWrapped(doc, data.messages.formalEmail, margin, y, width);
 
-      doc.save(`${data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "fixlocal-report"}.pdf`);
+      doc.save(`${data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "reportright-report"}.pdf`);
       toast.success("PDF generated.");
     } catch {
       toast.error("PDF generation failed.");

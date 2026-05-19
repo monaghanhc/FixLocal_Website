@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FixLocal AI Hosted Demo</title>
+    <title>ReportRight AI Hosted Demo</title>
     <meta
       name="description"
       content="A free hosted demo for generating polished local issue reports from photos and notes."
@@ -608,7 +608,7 @@
       <div class="shell header-inner">
         <button class="brand btn btn-light" type="button" data-view="home">
           <span class="brand-mark">FL</span>
-          <span>FixLocal AI</span>
+          <span>ReportRight AI</span>
         </button>
         <nav class="nav">
           <button class="btn btn-light" type="button" data-view="dashboard">Dashboard</button>
@@ -623,20 +623,19 @@
           <div class="shell hero-inner">
             <div>
               <span class="eyebrow">Review everything before sending</span>
-              <h1>Report local problems in 60 seconds</h1>
+              <h1>Report local and property issues to the right place, faster.</h1>
               <p>
-                Upload a photo, add the location and a few details, and FixLocal AI drafts a
-                professional report for a city office, landlord, property manager, HOA, utility, or
-                code enforcement office.
+                Upload a photo, confirm the location, and ReportRight AI helps draft a professional
+                report and suggest the right contact so you can review and send with confidence.
               </p>
               <div class="hero-actions">
                 <button class="btn btn-amber" type="button" data-view="create">Create a report</button>
                 <button class="btn btn-light" type="button" data-view="dashboard">View dashboard</button>
               </div>
               <div class="stats">
-                <div class="stat"><strong>Free</strong><span>Browser mock AI</span></div>
-                <div class="stat"><strong>Local</strong><span>Saved to this browser</span></div>
-                <div class="stat"><strong>Fast</strong><span>Email, SMS, PDF</span></div>
+                <div class="stat"><strong>Free</strong><span>3 reports per month</span></div>
+                <div class="stat"><strong>Review</strong><span>Verify recipients</span></div>
+                <div class="stat"><strong>Pro</strong><span>$4.99/mo or $29.99/yr</span></div>
               </div>
             </div>
           </div>
@@ -656,7 +655,7 @@
               <div class="card step-card"><div class="icon">1</div><h3>Upload photo</h3><p>Add a clear image of the issue.</p></div>
               <div class="card step-card"><div class="icon">2</div><h3>Add details</h3><p>Describe location, category, urgency, and notes.</p></div>
               <div class="card step-card"><div class="icon">3</div><h3>Generate report</h3><p>Mock AI estimates severity and drafts messages.</p></div>
-              <div class="card step-card"><div class="icon">4</div><h3>Pick contacts</h3><p>Use local directory suggestions as a starting point.</p></div>
+              <div class="card step-card"><div class="icon">4</div><h3>Review recipient</h3><p>Open the source, verify contact details, or manually enter a recipient.</p></div>
               <div class="card step-card"><div class="icon">5</div><h3>Track status</h3><p>Save reports and follow up from the dashboard.</p></div>
             </div>
           </div>
@@ -669,6 +668,15 @@
               <h2>Built for everyday local problems</h2>
             </div>
             <div class="grid examples" id="exampleCards"></div>
+          </div>
+        </section>
+        <section class="section">
+          <div class="shell">
+            <div class="section-title">
+              <p class="kicker">Pricing</p>
+              <h2>Free to start, Pro when you need more</h2>
+              <p>Free includes 3 AI-generated reports per calendar month. Monthly Pro is $4.99/month and Annual Pro is $29.99/year. Pro renews until canceled and should be managed through the billing provider in a production deployment.</p>
+            </div>
           </div>
         </section>
       </section>
@@ -705,7 +713,7 @@
 
     <footer class="footer">
       <div class="shell">
-        FixLocal AI does not provide legal advice. AI-generated content may be inaccurate. Verify
+        ReportRight AI does not provide legal advice. AI-generated content may be inaccurate. Verify
         contacts before sending. For emergencies, call emergency services.
       </div>
     </footer>
@@ -720,7 +728,7 @@
         "Unsafe rental condition",
         "Mold",
         "Broken streetlight",
-        "Flooding",
+        "Drainage or flooding",
         "Damaged sign",
         "Unsafe wiring",
         "Water damage",
@@ -879,7 +887,7 @@
           : "I am requesting review and repair when staff are able to inspect the location.";
         const subjectLine = `Request for action: ${form.title} at ${form.address}`;
         const notes = form.optionalNotes ? `\n\nAdditional notes: ${form.optionalNotes}` : "";
-        const formalEmail = `Subject: ${subjectLine}\n\nHello,\n\nI am reporting ${form.title.toLowerCase()} at ${location}. The issue was observed on ${observed}.\n\nSummary: ${form.description}\n\n${urgentLine} I have a photo available as an attachment or reference image. Please inspect the location and let me know what action can be taken or which office should handle this if it is outside your department.${notes}\n\nThank you,\nFixLocal AI user`;
+        const formalEmail = `Subject: ${subjectLine}\n\nHello,\n\nI am reporting ${form.title.toLowerCase()} at ${location}. The issue was observed on ${observed}.\n\nSummary: ${form.description}\n\n${urgentLine} I have a photo available as an attachment or reference image. Please inspect the location and let me know what action can be taken or which office should handle this if it is outside your department.${notes}\n\nThank you,\nReportRight AI user`;
         state.generated = {
           analysis: {
             detectedIssueType: detectedFor(form.category),
@@ -893,7 +901,7 @@
             subjectLine,
             formalEmail,
             smsMessage: `${form.title} at ${location}. Observed ${observed}. ${form.description} Severity estimate: ${severity}. Photo available. Please inspect or route to ${party}.`,
-            printableReport: `FixLocal AI Report\n\nIssue: ${form.title}\nCategory: ${form.category}\nLocation: ${location}\nDate observed: ${observed}\nEstimated severity: ${severity}\nSuggested responsible party: ${party}\n\nDescription:\n${form.description}\n\nRequested action:\nPlease inspect the location, document the condition, and schedule repair, cleanup, enforcement, or referral to the appropriate office. A photo is available for reference.${notes}`,
+            printableReport: `ReportRight AI Report\n\nIssue: ${form.title}\nCategory: ${form.category}\nLocation: ${location}\nDate observed: ${observed}\nEstimated severity: ${severity}\nSuggested responsible party: ${party}\n\nDescription:\n${form.description}\n\nRequested action:\nPlease inspect the location, document the condition, and schedule repair, cleanup, enforcement, or referral to the appropriate office. A photo is available for reference.${notes}`,
             followUpMessage: `Hello, I am following up on my report about ${form.title.toLowerCase()} at ${location}. It was observed on ${observed}. Could you please confirm whether it has been inspected, assigned, or routed to the correct office?`
           }
         };
@@ -1054,7 +1062,7 @@
           doc.text(wrapped, 16, y);
           y += Math.max(6, wrapped.length * 5.5);
         });
-        doc.save(`${form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "fixlocal-report"}.pdf`);
+        doc.save(`${form.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "reportright-report"}.pdf`);
       }
 
       function escapeHtml(value) {

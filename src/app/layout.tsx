@@ -9,9 +9,9 @@ import { getCurrentUser } from "@/lib/auth";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "FixLocal AI",
+  title: "ReportRight AI",
   description:
-    "Upload a photo of a local issue and generate a polished report for the right contact in 60 seconds."
+    "Upload a photo, confirm the location, and generate a polished report for the right recipient."
 };
 
 export default async function RootLayout({

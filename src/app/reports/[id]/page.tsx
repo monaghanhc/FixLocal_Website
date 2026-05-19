@@ -21,6 +21,7 @@ export default async function ReportPage({ params }: ReportPageProps) {
     where: { id, userId: user.id },
     include: {
       contacts: true,
+      routingDecision: true,
       statusHistory: { orderBy: { createdAt: "asc" } }
     }
   });

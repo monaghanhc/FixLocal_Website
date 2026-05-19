@@ -16,11 +16,11 @@ export function Hero({ isAuthed }: HeroProps) {
             Review everything before sending
           </div>
           <h1 className="mt-5 max-w-3xl text-5xl font-bold leading-[1.02] tracking-normal sm:text-6xl lg:text-7xl">
-            Report local problems in 60 seconds
+            Report local and property issues to the right place, faster.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-white/88 sm:text-xl">
-            Upload a photo, add the location and a few details, and FixLocal AI drafts a
-            professional report for the right authority, landlord, HOA, utility, or code office.
+            Upload a photo, confirm the location, and ReportRight AI helps draft a professional
+            report and suggest the right contact so you can review and send with confidence.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             {isAuthed ? (
@@ -46,11 +46,11 @@ export function Hero({ isAuthed }: HeroProps) {
           <div className="mt-10 grid max-w-2xl grid-cols-3 gap-3 text-sm text-white/80">
             <div className="rounded-lg bg-black/20 p-3 ring-1 ring-white/12 backdrop-blur">
               <p className="text-2xl font-bold text-white">Free</p>
-              <p>Mock AI by default</p>
+              <p>3 reports per month</p>
             </div>
             <div className="rounded-lg bg-black/20 p-3 ring-1 ring-white/12 backdrop-blur">
               <p className="text-2xl font-bold text-white">Local</p>
-              <p>SQLite and uploads</p>
+              <p>Recipient review</p>
             </div>
             <div className="rounded-lg bg-black/20 p-3 ring-1 ring-white/12 backdrop-blur">
               <p className="text-2xl font-bold text-white">Fast</p>

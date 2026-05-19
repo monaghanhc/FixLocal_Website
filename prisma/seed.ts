@@ -13,7 +13,69 @@ async function main() {
     }
   });
 
+  await prisma.subscriptionPlan.upsert({
+    where: { slug: "pro_monthly" },
+    update: {
+      priceCents: 499,
+      interval: "month",
+      reportLimit: null
+    },
+    create: {
+      slug: "pro_monthly",
+      name: "Monthly Pro",
+      priceCents: 499,
+      interval: "month",
+      reportLimit: null,
+      features: ["Unlimited reports", "PDF export", "Report history", "Saved contacts"]
+    }
+  });
+
+  await prisma.subscriptionPlan.upsert({
+    where: { slug: "pro_annual" },
+    update: {
+      priceCents: 2999,
+      interval: "year",
+      reportLimit: null
+    },
+    create: {
+      slug: "pro_annual",
+      name: "Annual Pro",
+      priceCents: 2999,
+      interval: "year",
+      reportLimit: null,
+      features: ["Unlimited reports", "PDF export", "Report history", "Saved contacts"]
+    }
+  });
+
+  for (const category of [
+    "Pothole",
+    "Broken sidewalk",
+    "Trash or illegal dumping",
+    "Unsafe rental condition",
+    "Mold",
+    "Broken streetlight",
+    "Drainage or flooding",
+    "Unsafe building",
+    "Downed tree",
+    "Power line or utility hazard",
+    "Water leak",
+    "Water damage",
+    "HOA issue",
+    "Other local problem"
+  ]) {
+    await prisma.issueCategory.upsert({
+      where: { slug: category.toLowerCase().replace(/[^a-z0-9]+/g, "-") },
+      update: { label: category },
+      create: {
+        slug: category.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        label: category,
+        responsibleDepartments: []
+      }
+    });
+  }
+
   await prisma.report.deleteMany({ where: { userId: demoUser.id } });
+  await prisma.usageCounter.deleteMany({ where: { userId: demoUser.id } });
 
   const reports = [
     {

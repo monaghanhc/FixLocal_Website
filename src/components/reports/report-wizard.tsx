@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, Save } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, LocateFixed, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { AIAnalysisCard } from "@/components/reports/ai-analysis-card";
 import { CategorySelector } from "@/components/reports/category-selector";
@@ -10,10 +10,16 @@ import { ContactSuggestions } from "@/components/reports/contact-suggestions";
 import { GeneratedMessagesTabs } from "@/components/reports/generated-messages-tabs";
 import { ImageUploader } from "@/components/reports/image-uploader";
 import { PDFDownloadButton } from "@/components/reports/pdf-download-button";
+import {
+  RecipientReview,
+  type RecipientConfirmationState
+} from "@/components/reports/recipient-review";
+import { recipientConfirmationComplete } from "@/lib/recipient-confirmation";
 import { CopyButton } from "@/components/ui/copy-button";
 import { issueCategories, reportStatuses } from "@/lib/constants";
 import type { AIReportResult } from "@/lib/ai/types";
 import type { SuggestedContactDTO } from "@/lib/contacts/directory";
+import type { ContactRoutingResult } from "@/lib/contact-routing/types";
 import { reportInputSchema, type ReportInputValues } from "@/lib/validators/report";
 import { cn, formatDate, statusLabel } from "@/lib/utils";
 
@@ -22,7 +28,7 @@ const steps = [
   "Describe issue",
   "AI analysis",
   "Generated report",
-  "Contacts",
+  "Recipient review",
   "Review and save"
 ];
 
@@ -32,8 +38,11 @@ const defaultInput: ReportInputValues = {
   category: issueCategories[0],
   address: "",
   city: "",
+  county: "",
   state: "",
   zip: "",
+  latitude: null,
+  longitude: null,
   dateObserved: new Date().toISOString().slice(0, 10),
   urgent: false,
   optionalNotes: "",
@@ -46,7 +55,16 @@ export function ReportWizard() {
   const [form, setForm] = useState<ReportInputValues>(defaultInput);
   const [ai, setAi] = useState<AIReportResult | null>(null);
   const [contacts, setContacts] = useState<SuggestedContactDTO[]>([]);
+  const [routingDecision, setRoutingDecision] = useState<ContactRoutingResult | null>(null);
+  const [recipientConfirmation, setRecipientConfirmation] = useState<RecipientConfirmationState>({
+    selectedContactIndex: 0,
+    manualMode: false,
+    manualContact: null,
+    verified: false,
+    emergencyAcknowledged: false
+  });
   const [analyzing, setAnalyzing] = useState(false);
+  const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [initialStatus, setInitialStatus] = useState("DRAFT");
 
@@ -54,7 +72,7 @@ export function ReportWizard() {
   const pdfData = useMemo(() => {
     if (!ai) return null;
     return {
-      title: form.title || "FixLocal report",
+      title: form.title || "ReportRight report",
       category: form.category,
       location,
       dateObserved: form.dateObserved ? formatDate(form.dateObserved) : "",
@@ -71,6 +89,14 @@ export function ReportWizard() {
     if (ai) {
       setAi(null);
       setContacts([]);
+      setRoutingDecision(null);
+      setRecipientConfirmation({
+        selectedContactIndex: 0,
+        manualMode: false,
+        manualContact: null,
+        verified: false,
+        emergencyAcknowledged: false
+      });
     }
   }
 
@@ -106,6 +132,14 @@ export function ReportWizard() {
 
       setAi(data.ai);
       setContacts(data.contacts);
+      setRoutingDecision(data.routingDecision);
+      setRecipientConfirmation({
+        selectedContactIndex: 0,
+        manualMode: false,
+        manualContact: null,
+        verified: false,
+        emergencyAcknowledged: false
+      });
       toast.success("AI report generated.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "AI analysis failed.");
@@ -115,8 +149,12 @@ export function ReportWizard() {
   }
 
   async function saveReport() {
-    if (!ai || contacts.length === 0) {
+    if (!ai || contacts.length === 0 || !routingDecision) {
       toast.error("Generate the AI report before saving.");
+      return;
+    }
+    if (!recipientConfirmationComplete(recipientConfirmation, routingDecision)) {
+      toast.error("Verify the recipient before saving.");
       return;
     }
 
@@ -125,7 +163,18 @@ export function ReportWizard() {
       const response = await fetch("/api/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ input: form, ai, contacts })
+        body: JSON.stringify({
+          input: form,
+          ai,
+          contacts,
+          routingDecision,
+          recipientConfirmation: {
+            selectedContactIndex: recipientConfirmation.selectedContactIndex,
+            manualContact: recipientConfirmation.manualMode ? recipientConfirmation.manualContact : null,
+            verified: recipientConfirmation.verified,
+            emergencyAcknowledged: recipientConfirmation.emergencyAcknowledged
+          }
+        })
       });
       const data = await response.json();
 
@@ -155,6 +204,51 @@ export function ReportWizard() {
   }
 
   const canGoForward = step === 0 ? Boolean(form.imagePath) : true;
+
+  async function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not available in this browser.");
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        setForm((current) => ({ ...current, latitude, longitude }));
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          const address = data.address ?? {};
+          setForm((current) => ({
+            ...current,
+            latitude,
+            longitude,
+            address:
+              [address.house_number, address.road].filter(Boolean).join(" ") ||
+              data.display_name ||
+              current.address,
+            city: address.city || address.town || address.village || current.city,
+            county: address.county || current.county,
+            state: address.state_code || address.state || current.state,
+            zip: address.postcode || current.zip
+          }));
+          toast.success("Location added. Please verify the address.");
+        } catch {
+          toast.error("GPS captured, but reverse geocoding failed. Enter the address manually.");
+        } finally {
+          setLocating(false);
+        }
+      },
+      () => {
+        setLocating(false);
+        toast.error("Could not access your location.");
+      }
+    );
+  }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
@@ -244,6 +338,20 @@ export function ReportWizard() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                  <button
+                    type="button"
+                    onClick={useCurrentLocation}
+                    disabled={locating}
+                    className="focus-ring inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-70"
+                  >
+                    {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}
+                    Use GPS location
+                  </button>
+                  <p className="mt-2 text-xs leading-5 text-slate-500">
+                    GPS is optional. If used, verify the reverse-geocoded address before generating.
+                  </p>
+                </div>
                 <div className="grid gap-2 md:col-span-2">
                   <label className="form-label" htmlFor="address">
                     Address or location
@@ -279,6 +387,18 @@ export function ReportWizard() {
                     onChange={(event) => setField("state", event.target.value.toUpperCase())}
                     placeholder="OH"
                     maxLength={2}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <label className="form-label" htmlFor="county">
+                    County
+                  </label>
+                  <input
+                    id="county"
+                    className="form-input"
+                    value={form.county ?? ""}
+                    onChange={(event) => setField("county", event.target.value)}
+                    placeholder="Optional"
                   />
                 </div>
                 <div className="grid gap-2">
@@ -385,7 +505,17 @@ export function ReportWizard() {
           />
         ) : null}
 
-        {step === 4 ? <ContactSuggestions contacts={contacts} /> : null}
+        {step === 4 && routingDecision ? (
+          <div className="space-y-5">
+            <ContactSuggestions contacts={contacts} routingDecision={routingDecision} />
+            <RecipientReview
+              contacts={contacts}
+              routingDecision={routingDecision}
+              value={recipientConfirmation}
+              onChange={setRecipientConfirmation}
+            />
+          </div>
+        ) : null}
 
         {step === 5 && ai ? (
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-card">
@@ -479,6 +609,14 @@ export function ReportWizard() {
                 }
                 if ((step === 2 || step === 3 || step === 4) && !ai) {
                   toast.error("Generate the AI report first.");
+                  return;
+                }
+                if (
+                  step === 4 &&
+                  routingDecision &&
+                  !recipientConfirmationComplete(recipientConfirmation, routingDecision)
+                ) {
+                  toast.error("Verify the recipient before continuing.");
                   return;
                 }
                 setStep((current) => Math.min(5, current + 1));
